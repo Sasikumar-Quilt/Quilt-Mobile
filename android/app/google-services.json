@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "930588986366",
+    "project_id": "quilt-8c01a",
+    "storage_bucket": "quilt-8c01a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:930588986366:android:c10ee5a45dbf1bf33e4eaf",
+        "android_client_info": {
+          "package_name": "com.QWLT.Quilt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "930588986366-kjeqhbgm389c6p91dud8cstcpfj5u6rt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBe42WZfTrOAdi85qKvr-bZilM20RDZ30k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "930588986366-kjeqhbgm389c6p91dud8cstcpfj5u6rt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "930588986366-0adio0ec0gma2n63rtfj1b25lsfat5je.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.q-u-i-l-t.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
