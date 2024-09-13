@@ -80,6 +80,7 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
     'images/audio_onboarding2.mp3',
     'images/audio_onboarding3.mp3', // Assuming you have a third image
   ];
+
   /*final List<String> texts = [
     """
       <p style="font-family: 'Causten-SemiBold', Arial, sans-serif; font-size: 32px; color: #ffffff; padding: 20px;">
@@ -99,7 +100,6 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
     """,
     // Assuming you have a third image
   ];*/
-
 
   final List<String> texts = [
     """
@@ -138,12 +138,13 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
   late VideoPlayerController? videoPlayerController;
   final player = AudioPlayer();
   Map<int, VideoPlayerController> controllers = {};
-  double screenHeight=0;
+  double screenHeight = 0;
+
   @override
   void initState() {
     super.initState();
     initializeVideos();
-    playVideo(0,false);
+    playVideo(0, false);
     if (defaultTargetPlatform == TargetPlatform.android) {
       _googleSignIn = GoogleSignIn(
           clientId:
@@ -168,8 +169,6 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
 
     // Define the animation for the gradient radius
 
-
-
     Future.delayed(Duration(milliseconds: 1500), () {
       nextImageTopPosition = MediaQuery.of(context).size.height;
       print("screenHeight");
@@ -182,47 +181,49 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
       _finalTextTop =
           MediaQuery.of(context).padding.top - 120; // Top of the screen
       _controller!.forward();
-      Future.delayed(Duration(seconds: 1), (){
+      Future.delayed(Duration(seconds: 1), () {
         setLogoAnimation();
       });
     }); // Start the animation
     requestPermission();
-
   }
+
   Future<void> requestPermission() async {
     var status = await Permission.notification.isGranted;
-    if(!status){
+    if (!status) {
       await Permission.notification.request();
     }
   }
-void initializeVideos(){
-  final VideoPlayerController _controller =
-  VideoPlayerController.asset(images[0]);
-  controllers[0]=_controller;
-  final VideoPlayerController _controller1 =
-  VideoPlayerController.asset(images[1]);
-  controllers[1]=_controller1;
-  final VideoPlayerController _controller2 =
-  VideoPlayerController.asset(images[2]);
-  controllers[2]=_controller2;
-  _controller.initialize();
-  _controller1.initialize();
-  _controller2.initialize();
-}
-void disposeVideos(){
-  controllers.forEach((key, value) {
-    value.dispose();
-  });
 
-}
-  void playVideo(int path,bool isPlay) {
+  void initializeVideos() {
+    final VideoPlayerController _controller =
+        VideoPlayerController.asset(images[0]);
+    controllers[0] = _controller;
+    final VideoPlayerController _controller1 =
+        VideoPlayerController.asset(images[1]);
+    controllers[1] = _controller1;
+    final VideoPlayerController _controller2 =
+        VideoPlayerController.asset(images[2]);
+    controllers[2] = _controller2;
+    _controller.initialize();
+    _controller1.initialize();
+    _controller2.initialize();
+  }
+
+  void disposeVideos() {
+    controllers.forEach((key, value) {
+      value.dispose();
+    });
+  }
+
+  void playVideo(int path, bool isPlay) {
     controllers.forEach((index, controller) {
       controller.pause();
       print('🚀🚀🚀 STOPPED $index');
     });
     final VideoPlayerController _controller = controllers[path]!;
-    videoPlayerController =_controller;
-    if(isPlay){
+    videoPlayerController = _controller;
+    if (isPlay) {
       playAudio(path);
     }
     videoPlayerController?.addListener(() {
@@ -233,8 +234,8 @@ void disposeVideos(){
     });
     videoPlayerController?.setLooping(true);
   }
-  void playAudio(int index) async{
 
+  void playAudio(int index) async {
     await player.play(AssetSource(audios[index]));
     videoPlayerController?.play();
     player.onPlayerStateChanged.listen((event) {
@@ -245,25 +246,24 @@ void disposeVideos(){
     player.setVolume(1.0);
     player.onPositionChanged.listen((event) {
       //print(event);
-      if(videoPlayerController!=null){
-        if(videoPlayerController!.value.isPlaying){
+      if (videoPlayerController != null) {
+        if (videoPlayerController!.value.isPlaying) {
           //print("isPlaying");
-        }else{
+        } else {
           print("isPlayingNot");
           videoPlayerController?.play();
         }
       }
-
-
     });
   }
-  void pauseAudio(){
 
+  void pauseAudio() {
     player.pause();
   }
 
   void checkExistMailId() async {
     isApiCalling = true;
+    setState(() {});
     ApiResponse apiResponse = await apiHelper
         .isAlreadyRegisteredApi(mobileNumberCntrl.text.toString());
     print("loginResponse");
@@ -276,9 +276,7 @@ void disposeVideos(){
             arguments: {
               "email": mobileNumberCntrl.text.toString(),
               "isAlreadyRegistered": loginResponse.isAlreadyRegistered
-            }).then((value) => {
-          isApiCalling=false
-        });
+            }).then((value) => {isApiCalling = false, setState(() {})});
       } else {
         isApiCalling = false;
         Utility.showSnackBar(context: context, message: loginResponse.message);
@@ -295,8 +293,9 @@ void disposeVideos(){
         await apiHelper.sendOtpEmail(mobileNumberCntrl.text.toString());
     print("loginResponse");
   }
-void setLogoAnimation(){
- /* anim2D = _lottie2AnimCtrl!
+
+  void setLogoAnimation() {
+    /* anim2D = _lottie2AnimCtrl!
       .duration!.inSeconds +
       1;
   print("object1234");
@@ -307,76 +306,50 @@ void setLogoAnimation(){
       _lottieOpacity =
       0.0; // Move text to the top of the screen
     });*/
-  _lottieOpacity =
-  1.0; // Move text to the top of the screen
+    _lottieOpacity = 1.0; // Move text to the top of the screen
     if (!Utility.isEmpty(
-        PreferenceUtils.getString(
-            PreferenceUtils
-                .USER_ID,
-            "")) &&
-        !PreferenceUtils.getBool(
-            PreferenceUtils
-                .IS_LOGIN)!) {
+            PreferenceUtils.getString(PreferenceUtils.USER_ID, "")) &&
+        !PreferenceUtils.getBool(PreferenceUtils.IS_LOGIN)!) {
       navigateToScreen(false);
-    } else if (PreferenceUtils
-        .getBool(PreferenceUtils
-        .IS_LOGIN)!) {
+    } else if (PreferenceUtils.getBool(PreferenceUtils.IS_LOGIN)!) {
       navigateToScreen(true);
     } else {
-
-      Future.delayed(
-          Duration(milliseconds: 500),
-              () {
+      Future.delayed(Duration(milliseconds: 500), () {
+        setState(() {
+          _initialTextTop = _finalTextTop;
+          showImagesScreen = true;
+          changeHeightForLogo = true;
+          playAudio(0);
+          Future.delayed(Duration(milliseconds: 800), () {
             setState(() {
-              _initialTextTop =
-                  _finalTextTop;
-              showImagesScreen = true;
-              changeHeightForLogo=true;
-              playAudio(0);
-              Future.delayed(
-                  Duration(
-                      milliseconds: 800),
-                      () {
-                    setState(() {
-                      swipeUpBootom =
-                          MediaQuery.of(
-                              context)
-                              .padding
-                              .bottom +
-                              70;
-                      instructionTextBottom =
-                          MediaQuery.of(
-                              context)
-                              .padding
-                              .bottom +
-                              180; // Move "HELLO" text towards the bottom
-                      instructionTextOpacity =
-                      1.0;
-                      instructionImageOpacity =
-                      1.0;
-                      swipeUpTextOpacity =
-                      1.0;
-                    });
-                    Future.delayed(
-                        Duration(seconds: 3),
-                            () {
-                          if (!isSwipeUp) {
-                            isFinishedInitialSetup =
-                            true;
-                            setState(() {});
-                          }
-                        });
-                  });
+              swipeUpBootom = MediaQuery.of(context).padding.bottom + 70;
+              instructionTextBottom = MediaQuery.of(context).padding.bottom +
+                  180; // Move "HELLO" text towards the bottom
+              instructionTextOpacity = 1.0;
+              instructionImageOpacity = 1.0;
+              swipeUpTextOpacity = 1.0;
             });
+            if (!isSwipeUp) {
+              isFinishedInitialSetup = true;
+              setState(() {});
+            }
+            /*Future.delayed(
+                        Duration(seconds: 0),
+                            () {
+
+                        });*/
           });
+        });
+      });
     }
- /* });*/
-}
+    /* });*/
+  }
+
   @override
   void dispose() {
     disposeVideos();
     //videoPlayerController?.dispose();
-    videoPlayerController=null;
+    videoPlayerController = null;
     player.dispose();
     _controller!.dispose(); // Dispose controller when widget is removed
     _lottie1AnimCtrl?.dispose();
@@ -386,13 +359,11 @@ void setLogoAnimation(){
 
   @override
   Widget build(BuildContext context) {
-    if(screenHeight==0){
+    if (screenHeight == 0) {
       screenHeight = MediaQuery.of(context).size.height;
       _initialTextTop = (screenHeight / 2); // Center the text vertically
       print(screenHeight);
     }
-
-
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -400,13 +371,21 @@ void setLogoAnimation(){
         child: Container(
           child: Stack(
             children: [
-              Container(child:Stack(children: [
-                Image.asset("assets/images/splash.gif",fit: BoxFit.fill,width: double.infinity,),
-              //  Image.asset("assets/images/noisy.png",fit: BoxFit.fill,width: double.infinity, colorBlendMode: BlendMode.overlay, color: Colors.black.withOpacity(0.0),),
+              Container(
+                child: Stack(
+                  children: [
+                    Image.asset(
+                      "assets/images/splash.gif",
+                      fit: BoxFit.fill,
+                      width: double.infinity,height: double.infinity,
+                    ),
+                    //  Image.asset("assets/images/noisy.png",fit: BoxFit.fill,width: double.infinity, colorBlendMode: BlendMode.overlay, color: Colors.black.withOpacity(0.0),),
 /*
                 Align(child: SvgPicture.asset("assets/images/app_logo1.svg",height: 53,),alignment: Alignment.center,),
 */
-              ],),),
+                  ],
+                ),
+              ),
               showImagesScreen
                   ? PageView.builder(
                       onPageChanged: (index) {
@@ -415,10 +394,10 @@ void setLogoAnimation(){
                         swipeUp();
                         print("swipeCount");
                         print(swipeCount);
-                        if(index!=3){
-                          playVideo(index,true);
-                        }else{
-                          changeHeightForLogo=false;
+                        if (index != 3) {
+                          playVideo(index, true);
+                        } else {
+                          changeHeightForLogo = false;
                           videoPlayerController?.pause();
                           pauseAudio();
                         }
@@ -465,9 +444,11 @@ void setLogoAnimation(){
                       itemBuilder: (BuildContext context, int index) {
                         return index == 3
                             ? Column(
-                                mainAxisSize: MainAxisSize.min,crossAxisAlignment: CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                 /* Expanded(
+                                  /* Expanded(
                                     child: Container(
                                       child: Image.asset(
                                         "assets/images/log_img.png",
@@ -476,7 +457,8 @@ void setLogoAnimation(){
                                       width: double.infinity,
                                     ),
                                   ),*/
-                                  Container(margin: EdgeInsets.only(bottom: 15),
+                                  Container(
+                                    margin: EdgeInsets.only(bottom: 15),
                                     child: Text(
                                       "Sign in or create an account",
                                       style: TextStyle(
@@ -487,64 +469,67 @@ void setLogoAnimation(){
                                     ),
                                   ),
                                   defaultTargetPlatform ==
-                                      TargetPlatform.android
+                                          TargetPlatform.android
                                       ? Container()
-                                      :Container(
-                                    child: Container(
-                                      height: 55,
-                                      child: TouchRippleEffect(  rippleColor: Colors.blue,
-                                        child: Container(height:55,
-                                          child: Row(
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                            children: [
-                                              SvgPicture.asset(
-                                                  "assets/images/apple_img.svg"),
-                                              Container(
-                                                child: Text(
-                                                  "Continue with Apple",
-                                                  style: TextStyle(
-                                                      color:
-                                                      splashTextColor,
-                                                      fontSize: 14,
-                                                      fontFamily:
-                                                      "Causten-Medium"),
+                                      : Container(
+                                          child: Container(
+                                            height: 55,
+                                            child: TouchRippleEffect(
+                                              rippleColor: Colors.blue,
+                                              child: Container(
+                                                height: 55,
+                                                child: Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    SvgPicture.asset(
+                                                        "assets/images/apple_img.svg"),
+                                                    Container(
+                                                      child: Text(
+                                                        "Continue with Apple",
+                                                        style: TextStyle(
+                                                            color:
+                                                                splashTextColor,
+                                                            fontSize: 14,
+                                                            fontFamily:
+                                                                "Causten-Medium"),
+                                                      ),
+                                                      margin: EdgeInsets.only(
+                                                          left: 15),
+                                                    )
+                                                  ],
                                                 ),
-                                                margin: EdgeInsets.only(
-                                                    left: 15),
-                                              )
-                                            ],
+                                                decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                        color: Colors.white),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            30),
+                                                    color: Colors.white),
+                                              ),
+                                              onTap: () {
+                                                appleSignIn();
+                                              },
+                                            ),
+                                            width: double.infinity,
+                                            margin: EdgeInsets.only(
+                                                left: 15, right: 15, top: 15),
                                           ),
-                                          decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color:
-                                                  Colors.white),
-                                              borderRadius:
-                                              BorderRadius.circular(
-                                                  30),color:Colors.white),
                                         ),
-                                        onTap: () {
-                                          appleSignIn();
-                                        },
-                                      ),
-                                      width: double.infinity,
-                                      margin: EdgeInsets.only(
-                                          left: 15, right: 15, top: 15),
-                                    ),
-                                  ) ,
                                   Container(
                                     child: Container(
                                       height: 55,
                                       child: TouchRippleEffect(
                                         rippleColor: Colors.blue,
-                                        child: Container(height:55,
+                                        child: Container(
+                                          height: 55,
                                           child: Row(
                                             crossAxisAlignment:
-                                            CrossAxisAlignment.center,
+                                                CrossAxisAlignment.center,
                                             mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                             children: [
                                               SvgPicture.asset(
                                                   "assets/images/google_img.svg"),
@@ -552,24 +537,22 @@ void setLogoAnimation(){
                                                 child: Text(
                                                   "Continue with Google",
                                                   style: TextStyle(
-                                                      color:
-                                                      splashTextColor,
+                                                      color: splashTextColor,
                                                       fontSize: 14,
                                                       fontFamily:
-                                                      "Causten-Medium"),
+                                                          "Causten-Medium"),
                                                 ),
-                                                margin: EdgeInsets.only(
-                                                    left: 15),
+                                                margin:
+                                                    EdgeInsets.only(left: 15),
                                               )
                                             ],
                                           ),
                                           decoration: BoxDecoration(
                                               border: Border.all(
-                                                  color:
-                                                  Colors.white),
+                                                  color: Colors.white),
                                               borderRadius:
-                                              BorderRadius.circular(
-                                                  30),color:Colors.white),
+                                                  BorderRadius.circular(30),
+                                              color: Colors.white),
                                         ),
                                         onTap: () {
                                           googleSignIn();
@@ -588,22 +571,19 @@ void setLogoAnimation(){
                                           fontSize: 14,
                                           fontFamily: "Causten-Medium"),
                                     ),
-                                    margin: EdgeInsets.only(
-                                        top: 10, bottom: 10),
+                                    margin:
+                                        EdgeInsets.only(top: 10, bottom: 10),
                                   ),
                                   Container(
                                     margin: const EdgeInsets.only(
-                                        left: 15,
-                                        right: 15,
-                                        bottom: 5,
-                                        top: 0),
+                                        left: 15, right: 15, bottom: 5, top: 0),
                                     padding: const EdgeInsets.all(3.0),
                                     child: TextField(
                                       controller: mobileNumberCntrl,
-                                      keyboardType:
-                                      TextInputType.emailAddress,
+                                      keyboardType: TextInputType.emailAddress,
                                       style: TextStyle(
-                                          fontFamily: "Causten-Medium",color: Colors.white,
+                                          fontFamily: "Causten-Medium",
+                                          color: Colors.white,
                                           fontSize: 14),
                                       onChanged: (text) {
                                         if (text.isNotEmpty &&
@@ -621,22 +601,20 @@ void setLogoAnimation(){
                                                 width: 0.7),
                                             // No border
                                             borderRadius:
-                                            BorderRadius.circular(
-                                                30)),
+                                                BorderRadius.circular(30)),
                                         focusedBorder: OutlineInputBorder(
                                             borderSide: const BorderSide(
                                                 color: Color(0xff6D6D6D),
                                                 width: 0.7),
                                             // No border
                                             borderRadius:
-                                            BorderRadius.circular(
-                                                30)),
+                                                BorderRadius.circular(30)),
                                         filled: true,
-                                        fillColor: Color.fromRGBO(39, 39, 39, 0.60),
+                                        fillColor:
+                                            Color.fromRGBO(39, 39, 39, 0.60),
                                         contentPadding:
-                                        const EdgeInsets.symmetric(
-                                            horizontal: 25.0,
-                                            vertical: 15),
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 25.0, vertical: 15),
                                         hintStyle: TextStyle(
                                             color: Color(0xFFB0B0B0),
                                             fontFamily: "Causten-Regular",
@@ -663,16 +641,15 @@ void setLogoAnimation(){
                                                   ? Colors.white
                                                   : Color(0xff5D5D5D),
                                               fontSize: 14,
-                                              fontFamily:
-                                              "Causten-Medium"),
+                                              fontFamily: "Causten-Medium"),
                                         ),
                                         decoration: BoxDecoration(
                                             color: /*isEnable
-                                                ? */Colors.black
-                                               /* : Color(0xffECECEC)*/,
+                                                ? */
+                                                Colors
+                                                    .black /* : Color(0xffECECEC)*/,
                                             borderRadius:
-                                            BorderRadius.circular(
-                                                30)),
+                                                BorderRadius.circular(30)),
                                       ),
                                       onTap: () {
                                         if (isEnable && !isApiCalling) {
@@ -682,7 +659,10 @@ void setLogoAnimation(){
                                     ),
                                     width: double.infinity,
                                     margin: EdgeInsets.only(
-                                        left: 15, right: 15, bottom: 10,top: 10),
+                                        left: 15,
+                                        right: 15,
+                                        bottom: 10,
+                                        top: 10),
                                   ),
                                   GestureDetector(
                                     child: Container(
@@ -692,48 +672,39 @@ void setLogoAnimation(){
                                           children: [
                                             TextSpan(
                                                 text:
-                                                'By continuing you confirm that you’ve read and accepted our ',
+                                                    'By continuing you confirm that you’ve read and accepted our ',
                                                 style: TextStyle(
-                                                    color:
-                                                    Colors.white,
+                                                    color: Colors.white,
                                                     fontFamily:
-                                                    "Causten-Regular",
+                                                        "Causten-Regular",
                                                     fontSize: 12)),
                                             TextSpan(
                                               text: 'Terms of Use',
                                               style: TextStyle(
                                                   decoration:
-                                                  TextDecoration
-                                                      .underline,
-                                                  fontFamily:
-                                                  "Causten-Medium",
-                                                  color:
-                                                  Colors.white,
+                                                      TextDecoration.underline,
+                                                  fontFamily: "Causten-Medium",
+                                                  color: Colors.white,
                                                   fontSize: 12),
                                             ),
                                             TextSpan(
                                                 text: ' and ',
                                                 style: TextStyle(
-                                                    color:
-                                                    Colors.white,
+                                                    color: Colors.white,
                                                     fontSize: 12)),
                                             TextSpan(
                                               text: 'Privacy Policy',
                                               style: TextStyle(
                                                   decoration:
-                                                  TextDecoration
-                                                      .underline,
-                                                  fontFamily:
-                                                  "Causten-Medium",
-                                                  color:
-                                                  Colors.white,
+                                                      TextDecoration.underline,
+                                                  fontFamily: "Causten-Medium",
+                                                  color: Colors.white,
                                                   fontSize: 12),
                                             ),
                                             TextSpan(
                                                 text: '.',
                                                 style: TextStyle(
-                                                    color:
-                                                    Colors.white,
+                                                    color: Colors.white,
                                                     fontSize: 12)),
                                           ],
                                         ),
@@ -746,15 +717,23 @@ void setLogoAnimation(){
                                     ),
                                     onTap: () {
                                       Navigator.of(context)
-                                          .pushNamed(
-                                          HomeWidgetRoutes.TCWebView)
+                                          .pushNamed(HomeWidgetRoutes.TCWebView)
                                           .then((value) => {
-                                      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark.copyWith(
-                                      statusBarColor: Colors.transparent, // Background color of status bar
-                                      statusBarIconBrightness: Brightness.light, // Icon brightness for Android
-                                      statusBarBrightness: Brightness.dark, // Icon brightness for iOS
-                                      ))
-                                      });
+                                                SystemChrome
+                                                    .setSystemUIOverlayStyle(
+                                                        SystemUiOverlayStyle
+                                                            .dark
+                                                            .copyWith(
+                                                  statusBarColor:
+                                                      Colors.transparent,
+                                                  // Background color of status bar
+                                                  statusBarIconBrightness:
+                                                      Brightness.light,
+                                                  // Icon brightness for Android
+                                                  statusBarBrightness: Brightness
+                                                      .dark, // Icon brightness for iOS
+                                                ))
+                                              });
                                     },
                                   )
                                   /*Container(
@@ -838,7 +817,9 @@ void setLogoAnimation(){
                                         ),
                                   Container(
                                     padding: EdgeInsets.all(10),
-                                    color:  Colors.black.withOpacity(0.7),height: double.infinity,width: double.infinity,
+                                    color: Colors.black.withOpacity(0.7),
+                                    height: double.infinity,
+                                    width: double.infinity,
                                   ),
                                   !isLoginOptions
                                       ? AnimatedPositioned(
@@ -854,16 +835,23 @@ void setLogoAnimation(){
                                             child: Column(
                                               children: [
                                                 AnimatedOpacity(
-                                                  opacity: 1.0,
-                                                  // Use animated opacity for the text
-                                                  duration: Duration(
-                                                      milliseconds:
-                                                          isSwipeUp ? 0 : 0),
-                                                  // Duration for the text fade in
-                                                  child:Html(data:texts[index],style: { "p": Style(
-                                                    fontSize: FontSize(32.0),
-                                                    fontFamily: 'Causten-SemiBold', // Replace with your font family
-                                                  ),},))
+                                                    opacity: 1.0,
+                                                    // Use animated opacity for the text
+                                                    duration: Duration(
+                                                        milliseconds:
+                                                            isSwipeUp ? 0 : 0),
+                                                    // Duration for the text fade in
+                                                    child: Html(
+                                                      data: texts[index],
+                                                      style: {
+                                                        "p": Style(
+                                                          fontSize:
+                                                              FontSize(32.0),
+                                                          fontFamily:
+                                                              'Causten-SemiBold', // Replace with your font family
+                                                        ),
+                                                      },
+                                                    ))
                                               ],
                                             ),
                                           ),
@@ -930,7 +918,6 @@ void setLogoAnimation(){
                 child: Center(
                   child: Column(
                     children: [
-
                       Container(
                         height: changeHeightForLogo ? 180 : 0,
                       ),
@@ -941,7 +928,11 @@ void setLogoAnimation(){
                               // Use animated opacity for the text
                               duration: Duration(seconds: 1),
                               // Duration for the text fade in
-                              child: SvgPicture.asset("assets/images/app_logo1.svg",width: showImagesScreen?54:null) /*Text(
+                              child: SvgPicture.asset(
+                                  "assets/images/app_logo1.svg",
+                                  width: showImagesScreen
+                                      ? 54
+                                      : null) /*Text(
                                 "QUILT",
                                 style: TextStyle(
                                   color: !isLoginOptions &&
@@ -995,7 +986,29 @@ void setLogoAnimation(){
                           ),
                         )
                       : Container(),
-
+              isApiCalling
+                  ? Positioned(
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 150,
+                        width: 150,
+                        child: Center(
+                            child: Lottie.asset(
+                                "assets/images/feed_preloader.json",
+                                height: 150,
+                                width: 150)),
+                      ),
+                    )
+                  : Positioned(
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(),
+                    )
             ],
           ),
         ),
@@ -1022,8 +1035,11 @@ void setLogoAnimation(){
   }
 
   void googleSignIn() async {
+    isApiCalling = true;
+    setState(() {});
     _googleSignIn?.onCurrentUserChanged
         .listen((GoogleSignInAccount? account) async {
+      print("GoogleSignInAccount");
 // #docregion CanAccessScopes
       // In mobile, being authenticated means being authorized...
       bool isAuthorized = account != null;
@@ -1038,8 +1054,23 @@ void setLogoAnimation(){
           await _currentUser?.authentication;
       print(googleSignInAuthentication?.idToken);
       googleLoginAPI(googleSignInAuthentication?.idToken, true);
-    });
-    _googleSignIn?.signIn();
+    }).onError(handleError);
+    try {
+      GoogleSignInAccount? googleSignInAccount = await _googleSignIn?.signIn();
+      if (googleSignInAccount == null) {
+        isApiCalling = false;
+        setState(() {});
+        print("cancelled");
+      }
+    } catch (error) {
+      isApiCalling = false;
+      setState(() {});
+    }
+  }
+
+  void handleError(error) {
+    isApiCalling = false;
+    setState(() {});
   }
 
   void googleLoginAPI(id, bool isGoogleLogin) async {
@@ -1057,6 +1088,7 @@ void setLogoAnimation(){
       if (loginResponse!.status == 200 &&
           loginResponse!.errorCode == 0 &&
           !Utility.isEmpty(loginResponse!.sessionToken!)) {
+        isApiCalling = false;
         PreferenceUtils.setString(
             PreferenceUtils.SESSION_TOKEN, loginResponse!.sessionToken);
         PreferenceUtils.setString(
@@ -1070,16 +1102,21 @@ void setLogoAnimation(){
               context, HomeWidgetRoutes.DashboardWidget, (route) => false);
         }
       } else {
+        isApiCalling = false;
         setState(() {});
         Utility.showSnackBar(context: context, message: loginResponse.message);
       }
     } else {
+      isApiCalling = false;
+      setState(() {});
       Utility.showSnackBar(
           context: context, message: apiResponse.message.toString());
     }
   }
 
   Future<void> appleSignIn() async {
+    isApiCalling = true;
+    setState(() {});
     final credential = await SignInWithApple.getAppleIDCredential(
       scopes: [
         AppleIDAuthorizationScopes.email,
@@ -1089,6 +1126,9 @@ void setLogoAnimation(){
       print("identityToken");
       print(credential.identityToken);
       googleLoginAPI(credential?.identityToken, false);
+    } else {
+      isApiCalling = false;
+      setState(() {});
     }
     // Now send the credential (especially `credential.authorizationCode`) to your server to create a session
     // after they have been validated with Apple (see `Integration` section for more information on how to do this)

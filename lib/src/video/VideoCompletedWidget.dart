@@ -172,7 +172,7 @@ class VideoCompletedWidgetState extends BasePageState<VideoCompletedWidget> {
                                     ),
 
                                     fromJournal==3?Container(child: SingleChildScrollView(child: Text(!Utility.isEmpty(triggerMessage)?triggerMessage:
-                                    "This helps us tailor your content feed based on your mood, and understand what the right moment is for certain kinds of content you see. We appreciate it, and future you will appreciate it too!",
+                                    contentObj==null||contentObj!.contentType=="FEEDBACK"?"":"This helps us tailor your content feed based on your mood, and understand what the right moment is for certain kinds of content you see. We appreciate it, and future you will appreciate it too!",
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 13,
@@ -302,7 +302,7 @@ String contentType(){
       return "Breathing Exercise";
     }else if(contentObj!.contentType=="MINDFULNESS"){
       return "Mindfulness Meditation";
-    }else  if ((contentObj!.contentType!.toLowerCase()=="positive_meditation")|| (contentObj!.contentType!.toLowerCase()=="mantra_meditation")||(contentObj!.contentType!.toLowerCase()=="negative_meditation")) {
+    }else  if ((contentObj!.contentType!.toLowerCase()=="positive_meditation")|| (contentObj!.contentType!.toLowerCase()=="mantra_meditation")||(contentObj!.contentType!.toLowerCase()=="negative_meditation")||(contentObj!.contentType!.toLowerCase()=="mindfulness_meditation")) {
       return "Meditation";
     }
     return "Sleep Story";

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'dart:ui';
@@ -9,15 +10,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:is_lock_screen2/is_lock_screen2.dart';
 import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
 import 'package:quilt/src/PrefUtils.dart';
+import 'package:quilt/src/PushNotificationService.dart';
 import 'package:quilt/src/base/BaseState.dart';
+import 'package:quilt/src/dialog/FeedbackDialog.dart';
 import 'package:quilt/src/feed/LottieWidget.dart';
 import 'package:quilt/src/feed/TextScrollWidget.dart';
+import 'package:quilt/src/feedback/OpenFeedBackWidget.dart';
+import 'package:quilt/src/remoteCOnfig/RemoteConfig.dart';
 import 'package:quilt/src/tooltip/enums.dart';
 import 'package:quilt/src/tooltip/super_tooltip.dart';
 import 'package:quilt/src/tooltip/super_tooltip_controller.dart';
@@ -30,11 +36,13 @@ import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../main.dart';
+import 'Analytics/UserTrackingHelper.dart';
 import 'Utility.dart';
 import 'api/ApiHelper.dart';
 import 'api/BaseApiService.dart';
 import 'api/NetworkApiService.dart';
 import 'api/Objects.dart';
+import 'dialog/VersionUpdateDialog.dart';
 import 'favorite/FavoriteDialog.dart';
 import 'feed/HomeWidgetRoute.dart';
 import 'feed/ImageViewWidget.dart';
@@ -103,6 +111,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   bool isShowTerms = false;
   FocusNode _focusNode = FocusNode();
   bool isShowSwipeAnim = false;
+  bool isShowTapAnim = false;
   bool isFromInitState = false;
   int currentTab = 0;
   List<Widget> webViewList = [];
@@ -114,10 +123,161 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   bool bIsPlay = false;
   PhoneState status = PhoneState.nothing();
   AudioPlayerManager audioManager = AudioPlayerManager();
-
+RemoteConfigService? remoteConfigService;
+  UserTrackingHelper? userTrackingHelper;
   @override
   void initState() {
     super.initState();
+    if(Platform.isAndroid){
+      getNotificationDetails();
+    }else{
+      FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+        print("getInitialMessage123");
+        if(message!=null){
+          print(message.data);
+          print("object");
+          print(message.notification);
+          getNotificationIosDetails(message,true);
+        }else{
+          init();
+        }
+      });
+    }
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+
+      print("onMessageOpenedApp");
+
+      if(message!=null){
+        print(message.data);
+      print("object");
+      print(message.notification);
+
+        getNotificationIosDetails(message,false);
+      }
+
+
+    });
+
+
+  }
+  void getNotificationIosDetails(RemoteMessage message,bool isInit){
+    Map<dynamic, dynamic> dataObj= message.data['data'] is String
+        ? jsonDecode(message.data['data'])
+        : message.data['data'];
+    Map<String, dynamic> content= dataObj['content'] is String
+        ? jsonDecode(dataObj['content'])
+        : dataObj['content'];
+    if(content["feedbackNotifications"]!=null){
+      Map<String, dynamic> feedbackNotifications=content["feedbackNotifications"] is String?jsonDecode(message.data['feedbackNotifications']):content['feedbackNotifications'];
+      if(feedbackNotifications!=null&&feedbackNotifications["shouldSendFeedbackNotification"]) {
+        String feedbackId=feedbackNotifications["assessmentId"];
+
+        PushNotificationService.isNotificationClick=true;
+        if(userTrackingHelper!=null){
+          bIsPlay=isPlay;
+          isPlay=false;
+          pauseAudio();
+          setState(() {
+
+          });
+          PushNotificationService.isNotificationClick=false;
+          Navigator.pushNamed(
+              context,
+              HomeWidgetRoutes
+                  .AssessmentListWidget,
+              arguments: {
+                "feedbackId":feedbackId
+              }).then((value) => {
+            if(bIsPlay){
+              isPlay=true,
+              playAudio(),
+              setState(() {
+
+              })
+            }
+          });
+        }else{
+          Navigator.pushNamed(
+              context,
+              HomeWidgetRoutes
+                  .AssessmentListWidget,
+              arguments: {
+                "feedbackId":feedbackId
+              }).then((value) => {
+            PushNotificationService.isNotificationClick=false,
+            init()
+          });
+        }
+      }else{
+        if(isInit){
+          init();
+        }
+      }
+    }
+   else{
+      if(isInit){
+        init();
+      }
+
+    }
+  }
+  Future<void> getNotificationDetails() async {
+    final NotificationAppLaunchDetails? notificationAppLaunchDetails =
+    await PushNotificationService.flutterLocalNotificationsPlugin
+        .getNotificationAppLaunchDetails();
+    if (notificationAppLaunchDetails != null &&
+        notificationAppLaunchDetails!.didNotificationLaunchApp) {
+      print('Notification payload: ${notificationAppLaunchDetails
+          .notificationResponse}');
+      print('Notification payload: ${notificationAppLaunchDetails
+          .notificationResponse!.payload}');
+      String? data=notificationAppLaunchDetails
+          .notificationResponse!.payload;
+      if(!Utility.isEmpty(data)){
+        Map<String, dynamic> content;
+        Map<String, dynamic> dataObj;
+        print("message.data");
+        print(data);
+        dataObj=jsonDecode(data!);
+        content = dataObj['content'] is String
+            ? jsonDecode(dataObj['content'])
+            : dataObj['content'];
+        if(content["feedbackNotifications"]!=null){
+          Map<String, dynamic> feedbackNotifications=content["feedbackNotifications"] is String?jsonDecode(content['feedbackNotifications']):content['feedbackNotifications'];
+          if(feedbackNotifications!=null&&feedbackNotifications["shouldSendFeedbackNotification"]){
+            Future.delayed(Duration.zero,(){
+              Navigator.pushNamed(
+                  context,
+                  HomeWidgetRoutes
+                      .AssessmentListWidget,
+                  arguments: {
+                    "feedbackId":feedbackNotifications["assessmentId"]
+                  }).then((value) => {
+                PushNotificationService.isNotificationClick=false,
+                init()
+              });
+            });
+
+          }else{
+            init();
+          }
+        }
+        else{
+          init();
+        }
+      }else{
+        init();
+      }
+    }else{
+      init();
+    }
+  }
+
+  void init(){
+    userTrackingHelper=UserTrackingHelper();
+    userTrackingHelper!.init();
+    userTrackingHelper!.saveUserEntries("app_open","");
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light));
@@ -142,9 +302,20 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
             PreferenceUtils.getString(PreferenceUtils.MOODID, ""), context);
       }
       getDefaultMoods();
+//checkForAppUpdate();
     });
     getFirebaseToken();
     updateContentFav();
+  }
+  void checkForAppUpdate(){
+    remoteConfigService=RemoteConfigService(context);
+    remoteConfigService!.initialize().then((value) => {
+      remoteConfigService!. shouldForceUpdate().then((value) => {
+        if(value){
+          showVersionUpdateDialog()
+        }
+      })
+    });
   }
 
   void requestPermission() async {
@@ -189,13 +360,14 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
 
   void showSwipeAnim() {
     bool isSwiped = PreferenceUtils.getBool("isSwiped") ?? false;
+    bool isTapAnim = PreferenceUtils.getBool("isTapAnim") ?? false;
     if (!isSwiped) {
-      Future.delayed(Duration(milliseconds: 500), () {
-        isSwiped = PreferenceUtils.getBool("isSwiped") ?? false;
-        if (!isSwiped) {
-          isShowSwipeAnim = true;
-        }
-      });
+      isShowSwipeAnim = true;
+      PreferenceUtils.setBool("isSwiped", true);
+    }
+    if(!isTapAnim&&isSwiped){
+      isShowTapAnim=true;
+      PreferenceUtils.setBool("isTapAnim", true);
     }
   }
 
@@ -218,6 +390,34 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
           }
         }
         print('${DateTime.now()} Event: $event');
+      }
+    });
+    eventBus.on<NotificationEvent>().listen((event) {
+      List<String> receivedList = event.id;
+      print(receivedList.length);
+      if(userTrackingHelper!=null){
+        bIsPlay=isPlay;
+        isPlay=false;
+        pauseAudio();
+        setState(() {
+
+        });
+        PushNotificationService.isNotificationClick=false;
+        Navigator.pushNamed(
+            context,
+            HomeWidgetRoutes
+                .AssessmentListWidget,
+            arguments: {
+              "feedbackId":receivedList[0]
+            }).then((value) => {
+          if(bIsPlay){
+            isPlay=true,
+            playAudio(),
+            setState(() {
+
+            })
+          }
+        });
       }
     });
   }
@@ -311,6 +511,8 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
       int currentTap = PreferenceUtils.getInt("currentTap", 0);
 
       if (state == AppLifecycleState.paused) {
+        userTrackingHelper!.saveUserEntries("app_minimise","");
+        userTrackingHelper!.sendUserTrackingRequest();
         print("applicationPaused");
         print(currentRouteName);
         if ((currentRouteName == HomeWidgetRoutes.DashboardWidget ||
@@ -334,6 +536,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
           }
         }
       } else if (state == AppLifecycleState.resumed) {
+        userTrackingHelper!.saveUserEntries("app_open","");
         print('app resumed');
         timer?.cancel();
         timer = null;
@@ -429,6 +632,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                             itemCount: contentList!.length,
                             onPageChanged: (index) async {
                               await pauseAudio();
+                              userTrackingHelper!.saveUserEntries("feed_exit",contentList![pageCount].contentId!);
                               pageCount = index;
                               tempPageCount = pageCount;
                               isPlay = true;
@@ -441,15 +645,20 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                                 playAudio();
                               }
                               isScroll = true;
-                              bool isSwiped =
-                                  PreferenceUtils.getBool("isSwiped") ?? false;
-                              if (!isSwiped) {
-                                isShowSwipeAnim = false;
-                                PreferenceUtils.setBool("isSwiped", true);
+
+                              if(isShowTapAnim){
+                                isShowTapAnim = false;
+
+                              }
+                              if (isShowSwipeAnim) {
+                                   isShowSwipeAnim = false;
+                                   isShowTapAnim=true;
+                                   PreferenceUtils.setBool("isTapAnim", true);
                               }
                               setState(() {});
                               preloadVideos.onPageChanged(index);
                               preloadImages.onPageChanged(index);
+                              userTrackingHelper!.saveUserEntries("feed_entry",contentList![pageCount].contentId!);
                             },
                             scrollDirection: Axis.vertical,
                             itemBuilder: (context, index) {
@@ -533,7 +742,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                                           ),
                                           alignment: Alignment.center,
                                         ),
-                                        bottomView(index)
+                                        (contentList![index].contentType == "FEEDBACK")?Container():bottomView(index)
                                       ],
                                     ),
                                     onTap: () {
@@ -565,6 +774,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   }
 
   void handleTap(int index) {
+    userTrackingHelper!.saveUserEntries("content_entry",contentList![index].contentId!);
     if (contentList![index].contentFormat == "VIDEO") {
       _phoneStateSubscription?.pause();
       isPlay = false;
@@ -574,7 +784,9 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
           .then((value) => {
                 _phoneStateSubscription?.resume(),
                 updateVideoLastPosition(value, index)
-              });
+              }).then((value) => {
+      userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
+      });
     } else if (contentList![index].contentType == "JOURNAL") {
       isPlay = false;
       _phoneStateSubscription?.pause();
@@ -584,7 +796,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         "url": contentList![index],
         "index": index
       }).then((value) =>
-          {isPlay = true, _phoneStateSubscription?.resume(), setState(() {})});
+          { userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!),isPlay = true, _phoneStateSubscription?.resume(), setState(() {})});
     } else if (contentList![index].contentType == "EMI" ||
         contentList![index].contentType == "INFO_TIDBITS" ||
         contentList![index].contentType == "INFO_TIDBITS_OCD" ||
@@ -597,10 +809,22 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         "url": contentList![index],
         "index": index
       }).then((value) =>
-          {isPlay = true, _phoneStateSubscription?.resume(), setState(() {})});
+          { userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!),isPlay = true, _phoneStateSubscription?.resume(), setState(() {})});
     } else if (contentList![index].contentType == "ASSESSMENT") {
       Navigator.pushNamed(context, HomeWidgetRoutes.AssessmentWidget,
-          arguments: {"url": contentList![index]});
+          arguments: {"url": contentList![index]}).then((value) => {
+        userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
+      });
+    } else if (contentList![index].contentType == "FEEDBACK") {
+      Navigator.pushNamed(
+          context,
+          HomeWidgetRoutes
+              .AssessmentListWidget,
+          arguments: {
+            "url":contentList![index]
+          }).then((value) => {
+        userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
+      });
     } else if (contentList![index].contentFormat == "AUDIO") {
       _phoneStateSubscription?.pause();
       isPlay = false;
@@ -608,14 +832,14 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
       setState(() {});
       Navigator.pushNamed(context, HomeWidgetRoutes.AudioPlayerWidget,
               arguments: {"url": contentList![index], "index": index})
-          .then((value) => {
+          .then((value) => { userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!),
                 _phoneStateSubscription?.resume(),
                 updateAudioLastPosition(value, index)
               });
     } else {
       pauseAudio();
       Navigator.pushNamed(context, HomeWidgetRoutes.webScreenScreen,
-          arguments: {"url": contentList![index]}).then((value) => playAudio());
+          arguments: {"url": contentList![index]}).then((value) => { userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!),playAudio()});
     }
   }
 
@@ -626,6 +850,22 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   Widget buildContentView(int index) {
     if (contentList![index].contentType == "ASSESSMENT") {
       return ImageViewWidget(imageUrl: contentList![index].animations!);
+    }else if(contentList![index].contentType == "FEEDBACK"){
+      return Container(child: Container(alignment: Alignment.center,child: Column(crossAxisAlignment:CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,mainAxisSize: MainAxisSize.max,children: [
+        Container(child: Image.asset("assets/images/feeback_img.png"),height: 60,width: 60,),
+        Container(margin: EdgeInsets.only(left: 15,top: 30),child: Text("Rate your experience",style: TextStyle(color: Colors.white,fontSize: 20,fontFamily: "Causten-Medium"),),)
+
+        ,Container(margin: EdgeInsets.only(left: 15,top: 10),child: Text("Your opinion means the world.\n Please share it with us",textAlign: TextAlign.center,style: TextStyle(color: Color(0xff888888),fontSize: 14,fontFamily: "Causten-Regular"),),)
+        ,GestureDetector(child: Container(padding: EdgeInsets.only(left: 15,top: 8,right: 15,bottom: 8),margin: EdgeInsets.only(top: 25),decoration: BoxDecoration(color: Color(0xff40A1FB),border: Border.all(color: Color(0xff40A1FB)),borderRadius: BorderRadius.circular(30)),child: Row(mainAxisSize: MainAxisSize.min,crossAxisAlignment: CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,children: [
+
+          Container(margin: EdgeInsets.only(left: 8,top: 0),child: Text("Give feedback",textAlign: TextAlign.center,style: TextStyle(color: Colors.black,fontSize: 14,fontFamily: "Causten-Medium"),),)
+
+        ],),),onTap: (){
+
+          //showOpenFeedback();
+
+        },)
+      ],),),);
     }
     if (contentList![index].isVideoAudio ||
         contentList![index].contentFormat == "VIDEO") {
@@ -677,7 +917,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  contentList![index].contentType != "ASSESSMENT"
+                  contentList![index].contentType != "ASSESSMENT"||(contentList![index].contentType == "FEEDBACK")
                       ? GestureDetector(
                           child: Container(
                             child: SvgPicture.asset(
@@ -734,7 +974,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
               ),
               alignment: Alignment.topRight,
             ),
-            Container(
+            contentList![index].contentType == "FEEDBACK"?Container(): Container(
               margin: EdgeInsets.only(bottom: 20),
               child: Row(
                 children: [
@@ -883,7 +1123,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                               "INFO_TIDBITS_OCD") ||
                           (contentList![index].contentType ==
                               "INFO_TIDBITS_GENERAL") ||
-                          (contentList![index].contentType == "ASSESSMENT"))
+                          (contentList![index].contentType == "ASSESSMENT")|| (contentList![index].contentType == "FEEDBACK"))
                       ? GestureDetector(
                           child: Container(
                             child: SvgPicture.asset(
@@ -945,7 +1185,53 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
               ),
             ),
           ))
-        : Container();
+        : isShowTapAnim?Container(child: Container(
+      child: Container(
+        color: Colors.black.withOpacity(0.8),
+        child: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Lottie.asset("assets/images/tap_anim.json",
+                  repeat: true, height: 80),
+              Container(
+                  child: Text(
+                    "Tap on the screen",
+                    style: TextStyle(
+                        fontFamily: "Causten-Medium",
+                        fontSize: 16,
+                        color: Colors.white),
+                    textAlign: TextAlign.center,
+                  )),
+              Container(
+                child: Text("To enter your experience",
+                    style: TextStyle(
+                        fontFamily: "Causten-Regular",
+                        fontSize: 14,
+                        color: Colors.white),
+                    textAlign: TextAlign.center),
+                margin: EdgeInsets.only(top: 5),
+              ),
+              InkWell(child: Container(margin: EdgeInsets.only(top: 25),decoration: BoxDecoration(color: Colors.white,
+                border: Border.all(
+                    width: 1.0,color: Colors.white
+                ),
+                borderRadius: BorderRadius.all(
+                    Radius.circular(20.0) //                 <--- border radius here
+                ),
+              ),padding:EdgeInsets.only(left: 15,right: 15,top: 8,bottom: 8),child: Text("Got it",style: TextStyle(color: Color(0xFF2E292C),fontSize: 14,fontFamily: "Causten-Bold"),),),onTap: (){
+                PreferenceUtils.setBool("isTapAnim", true);
+                isShowTapAnim=false;
+                setState(() {
+
+                });
+              },)
+            ],
+          ),
+        ),
+      ),
+    ),):Container();
   }
 
   Widget buildLeftSearchBar() {
@@ -1027,6 +1313,8 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                   EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
             ),
             onTap: () {
+
+
               isLoading = 0;
               selectedPositive = 0;
               textEditingController.text = "";
@@ -1049,6 +1337,9 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
               _showEmotionModal();
             },
           ),
+          InkWell(child: Container(padding: EdgeInsets.only(left: 15,right: 15,bottom: 6,top: 6),margin: EdgeInsets.only(right: 15,top: 5),child: Text("Give feedback",style: TextStyle(fontFamily: "Causten-Medium",color: Colors.white,fontSize: 14),),decoration: BoxDecoration(border: Border.all(color: Color(0xffECECEC),width: 1),borderRadius: BorderRadius.circular(30)),),onTap: (){
+            showOpenFeedback(false);
+          },)
         ],
       ),
     );
@@ -1124,12 +1415,14 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   }
 
   Future<void> getCollectionList() async {
+    print("collectionApiRequest");
+    print(DateTime.timestamp());
     ApiResponse? apiResponse = await apiHelper.getCollections();
     CollectionList sCollectionList = CollectionList.fromJson(apiResponse.data);
     print("collectionListResponse");
+    print(DateTime.timestamp());
+    collectionList = [];
     if (sCollectionList.collectionList!.isNotEmpty) {
-      collectionList = [];
-
       collectionList.addAll(sCollectionList.collectionList!);
       print("collectionList");
       print(collectionList.length);
@@ -1149,6 +1442,14 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
               "collectionID", collectionList[0].collectionId!);
           PreferenceUtils.setString(
               "collectionName", collectionList[0].collectionName!);
+        }else{
+         CollectionObject collectionObject= collectionList
+              .where((element) =>
+          element.collectionId ==
+              PreferenceUtils.getString("collectionID", ""))
+              .toList()[0];
+         PreferenceUtils.setString(
+             "collectionName", collectionObject.collectionName!);
         }
       }
       // setState(() {});
@@ -1283,10 +1584,14 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   }
 
   Future<void> createCollectionApi(String collectionName) async {
+    print("createCollectionApi");
+    print(DateTime.timestamp());
     ApiResponse? apiResponse =
         await apiHelper.createCollection(collectionName, "");
     CreateCollectionObject collectionObject =
         CreateCollectionObject.fromJson(apiResponse.data);
+    print("createCollectionApiResponse");
+    print(DateTime.timestamp());
     if (collectionObject.collectionObject != null) {
       if (collectionList.isEmpty) {
         PreferenceUtils.setString(
@@ -1311,6 +1616,9 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   }
 
   void getContentList(String id, ctx) async {
+    if(moodId!=id){
+      userTrackingHelper!.sendUserTrackingRequest();
+    }
     PreferenceUtils.setBool("is_surprise", isSurpriseMe);
     moodId = id;
     if (!isFromInitState) {
@@ -1321,7 +1629,9 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
       PreferenceUtils.setString(PreferenceUtils.MOODID, id);
     } else {
       isHasTag = true;
+      userTrackingHelper!.setHashTagName(moodId);
     }
+    userTrackingHelper!.setHashTag(isHasTag);
     ApiResponse? apiResponse = null;
     if (moodId.contains("#") && !isSurpriseMe) {
       apiResponse = await apiHelper.getContentLists(
@@ -1348,6 +1658,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
 
         currentPage++; // Prepare for next page request
         if (contentList!.length <= 10 && _pageController!.hasClients) {
+          userTrackingHelper!.saveUserEntries("feed_entry",contentList![0].contentId!);
           if (isClosedBottomSheet) {
             isPlay = true;
           } else {
@@ -1365,6 +1676,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
           preloadImages.init(contentList);
         } else {
           if (contentList!.length <= 10) {
+            userTrackingHelper!.saveUserEntries("feed_entry",contentList![0].contentId!);
             print("isClosedBottomSheet");
             print(isClosedBottomSheet);
             if (isClosedBottomSheet) {
@@ -2645,22 +2957,19 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                           ),
                         ),
                         isContentListApiRunning
-                            ? Container(
-                                height: 320,
-                                color: Color(0xff131314).withOpacity(0.5),
-                                // Set the desired height for the bottom sheet
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: Container(
-                                    height: 25,
-                                    width: 25,
-                                    margin: EdgeInsets.all(5),
-                                    child: CircularProgressIndicator(
+                            ? Positioned(top: 0,bottom: 0,left: 0,right: 0,
+                                child: Container(
+                                  height: 100,
+                                  width: 100,
+                                  margin: EdgeInsets.all(5),
+                                  child: Center(
+                                      child: Lottie.asset(
+                                          "assets/images/feed_preloader.json",height: 100,width: 100)
+                                  )/*CircularProgressIndicator(
                                       strokeWidth: 2.0,
                                       valueColor:
                                           AlwaysStoppedAnimation(Colors.white),
-                                    ),
-                                  ),
+                                    )*/,
                                 ),
                               )
                             : Container(
@@ -2709,6 +3018,81 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         });
   }
 
+  void showOpenFeedback(bool isWeekly){
+    bIsPlay=isPlay;
+    isPlay=false;
+    pauseAudio();
+    setState(() {
+
+    });
+    showModalBottomSheet(
+        context: context,
+        backgroundColor: Color(0xff131314),
+    isScrollControlled: true,barrierColor: Colors.transparent,
+    isDismissible:false,
+    builder: (BuildContext context) {
+    return Padding(
+        padding: MediaQuery
+            .of(context)
+            .viewInsets,
+        child:OpenFeedBackWidget(isWeekly:isWeekly));
+    }).then((value) => {
+      updateOpenFeedback(value,isWeekly)
+    });
+  }
+  void updateOpenFeedback(value,bool isWeekly){
+    print("updateOpenFeedback");
+    print(value);
+    if(value!=value["success"]){
+      showFeedbackSuccessDialog(isWeekly);
+    }else{
+      if(!isWeekly){
+        if(bIsPlay){
+          isPlay=true;
+          bIsPlay=false;
+          playAudio();
+          setState(() {
+          });
+        }
+      }
+
+    }
+  }
+  void showFeedbackSuccessDialog(bool isWeekly){
+    showDialog(
+        context: context,
+        builder: (context) {
+          return Dialog(backgroundColor: Color(0xff1A1A1A),
+            child: FeedBackDialog(),
+          );
+        }).then((value) => {
+          if(!isWeekly){
+            if(bIsPlay){
+              isPlay=true,
+              bIsPlay=false,
+              playAudio(),
+              setState(() {
+              })
+            }
+          }
+
+    });
+  }
+  void showVersionUpdateDialog(){
+    bIsPlay=isPlay;
+    isPlay=false;
+    pauseAudio();
+    setState(() {
+
+    });
+    showDialog(
+        context: context,
+        builder: (context) {
+          return Dialog(backgroundColor: Color(0xff1A1A1A),
+            child: VersionUpdateDialog(),
+          );
+        });
+  }
   void getPositiveDefaultMoods() async {
     ApiResponse apiResponse = await apiHelper.getPromptNames("", true);
     if (apiResponse.status == Status.COMPLETED) {
@@ -2884,7 +3268,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   String getContentType(String lowerCase) {
     if ((lowerCase.toLowerCase() == "positive_meditation") ||
         (lowerCase.toLowerCase() == "mantra_meditation") ||
-        (lowerCase.toLowerCase() == "negative_meditation")) {
+        (lowerCase.toLowerCase() == "negative_meditation")||(lowerCase.toLowerCase() == "mindfulness_meditation")) {
       return "MEDITATION";
     } else if ((lowerCase.toLowerCase() == "hypnotic_induction")) {
       return "HYPNOSIS";
@@ -2913,7 +3297,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         (lowerCase == "mindfulness") ||
         (lowerCase == "positive_meditation") ||
         (lowerCase == "mantra_meditation") ||
-        (lowerCase == "negative_meditation")) {
+        (lowerCase == "negative_meditation")||(lowerCase=="mindfulness_meditation")) {
       return "assets/images/meditation.svg";
     } else if (lowerCase == "breath" ||
         lowerCase == "426_breathing" ||

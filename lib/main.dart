@@ -51,6 +51,7 @@ String? routeName="";
 int currentTab=0;
 const splashTextColor=Color(0xFF2E292C);
 const greyColor=Color(0xFFA0949D);
+
 final routes = <String, Widget>{
   HomeWidgetRoutes.SplashScreen:DashboardWidget(),
   HomeWidgetRoutes.OtpScreen:OtpWidget(),
@@ -133,12 +134,20 @@ void main() async{
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
-  runApp(const MyApp());
+  runApp(App());
+}
+class App extends StatefulWidget{
+  @override
+  State<StatefulWidget> createState() {
+   return MyApp();
+  }
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+class MyApp extends State<App> {
+@override
+  void initState() {
+    super.initState();
+  }
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -181,5 +190,10 @@ class MyRouteObserver extends RouteObserver<PageRoute<dynamic>> {
     print(routeName);
 
     super.didPop(route, previousRoute);
+  }
+  @override
+  void didRemove(Route route, Route? previousRoute) {
+    super.didRemove(route, previousRoute);
+    print("didRemove");
   }
 }

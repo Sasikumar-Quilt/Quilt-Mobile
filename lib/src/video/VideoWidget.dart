@@ -198,33 +198,7 @@ class _VideoWidgetState extends State<VideoWidget> {
                 child: SizedBox(
                   width: videoPlayerController!.value.size.width ?? 0,
                   height: videoPlayerController!.value.size.height ?? 0,
-                  child: /*VisibilityDetector(
-                    key: Key(contentId),
-                    onVisibilityChanged: (VisibilityInfo info) {
-                      */ /*print("visibleFraction2");
-                      print(contentId);
-                      print(info.key);
-                      var visiblePercentage = info.visibleFraction * 100;
-                      print(visiblePercentage);
-                      if (visiblePercentage < 20) {
-                        print("pausedVideo2");
-                        videoPlayerController!.pause(); //pausing  functionality
-                        pauseAudio();
-                      } else {
-                        if (widget.isPlay) {
-                          print("pauseVideo3");
-                          videoPlayerController!.play();
-                          playAudio();
-                        } else {
-
-                          print("pausedVideo1");
-                          videoPlayerController!.pause();
-                          pauseAudio();
-                        }
-                      }*/ /*
-                    },
-                    child: VideoPlayer(videoPlayerController!),
-                  )*/
+                  child:
                       VideoPlayer(videoPlayerController!),
                 ),
               ))
@@ -238,21 +212,11 @@ class _VideoWidgetState extends State<VideoWidget> {
                     color: Colors.black,
                     child: Center(
                         child: Lottie.asset(
-                            "assets/images/feed_preloader.json") /* CircularProgressIndicator(
-                      backgroundColor: Colors.grey,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.blueAccent),
-                    )*/
+                            "assets/images/feed_preloader.json")
                         ),
                   ),
                 ),
-              ) /*FutureBuilder(
-      future: _initializeVideoPlayerFuture,
-      builder: (context, snapshot) {
-        return (snapshot.connectionState == ConnectionState.done)
-            ;
-      },
-    )*/
+              )
         ;
   }
 
@@ -273,11 +237,7 @@ class _VideoWidgetState extends State<VideoWidget> {
     }
 
     await audioPlayerManager.playAudio(widget.audioUrl, _lastPosition, true);
-    /*if (_lastPosition != null) {
-      await player.play(UrlSource(widget.audioUrl), position: _lastPosition);
-    } else {
-      await player.play(UrlSource(widget.audioUrl));
-    }*/
+
     audioPlayerManager.withUpdateCallback((duration) => {
           //print(audioPlayerManager.getCurrentAction()),
           if (audioPlayerManager.getCurrentAction() == "Video")
@@ -301,33 +261,13 @@ class _VideoWidgetState extends State<VideoWidget> {
                 }
             }
         });
-    /* player.onPlayerStateChanged.listen((event) {
-      print("onPlayerStateChanged");
-      print(event);
-    });*/
+
     //player.setReleaseMode(ReleaseMode.loop);
     audioPlayerManager.setVolume(widget.isMute);
     if (!widget.isPlay) {
       audioPlayerManager.pause();
     }
-    /* player.onPositionChanged.listen((event) {
-      //print(event);
-      if (widget.isPlay) {
-        if (videoPlayerController!.value.isPlaying) {
-        } else {
-          if (widget.isVideoAudio) {
-            videoPlayerController!.play();
-          }
-        }
-      } else {
-        videoPlayerController!.pause();
-      }
 
-      if (event.inMilliseconds != 0) {
-        _lastPosition = event;
-        widget.updatePosition(widget.index, event);
-      }
-    });*/
   }
 
   void resumeAudio() {

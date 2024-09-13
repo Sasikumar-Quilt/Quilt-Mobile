@@ -6,16 +6,37 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:quilt/src/api/Objects.dart';
 
+import '../main.dart';
 import 'firebase/FirebaseOptions.dart';
 
 class PushNotificationService{
-  static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  static var isNotificationClick=false;
+  static var feedBackID="";
 
+  static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   static Future<void> initialize() async {
 
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+   /* FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+      print("getInitialMessage123");
+      print(message);
+      if(message!=null){
+        Map<String, dynamic> content;
+        print("message.data");
+        print(message.data);
+        *//*content = message.data['content'] is String
+            ? jsonDecode(message.data['content'])
+            : message.data['content'];
+        Map<String, dynamic> feedbackNotifications=content["feedbackNotifications"] is String?jsonDecode(message.data['feedbackNotifications']):content['feedbackNotifications'];
+        if(feedbackNotifications!=null&&feedbackNotifications["shouldSendFeedbackNotification"]){
+          isNotificationClick=true;
+          feedBackID=feedbackNotifications["assessmentId"];
+        }*//*
+      }
 
+    });*/
     //ios update
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
@@ -36,6 +57,16 @@ class PushNotificationService{
   static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     await PushNotificationService.setupFlutterNotifications();
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+    flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse notificationResponse) async {
+          print("isNotificationClicked2");
+        },onDidReceiveBackgroundNotificationResponse: notificationTapBackground);
     if (message.data.isNotEmpty) {
        showFlutterNotification(message);
     }
@@ -84,35 +115,68 @@ class PushNotificationService{
   static void setForegroundNotification(){
     FirebaseMessaging.onMessage.listen(PushNotificationService.showFlutterNotification);
   }
+  @pragma('vm:entry-point')
+  static void notificationTapBackground(NotificationResponse notificationResponse) {
+    print("FromNotification2");
+    print(notificationResponse.payload);
 
+  }
   static void showFlutterNotification(RemoteMessage message) {
-    print("showFlutterNotification");
-    print(message);
 
-    print(message.data);
-
-    String title="";
-    String body="";
-    if(message.data.isNotEmpty){
-      Map<String, dynamic> content = message.data['content'] is String
-          ? jsonDecode(message.data['content'])
-          : message.data['content'];
-       title = content['title'] ?? 'No Title';
-       body = content['payload'] ?? 'No Payload';
-    }
    /* RemoteNotification? notification = message.notification;
     AndroidNotification? android = message.notification?.android;*/
     if(Platform.isAndroid){
+      print("showFlutterNotification");
+      print(message);
+
+      print(message.data);
+
+      String title="";
+      String body="";
+      Map<String, dynamic> content;
+      if(message.data.isNotEmpty){
+        content = message.data['content'] is String
+            ? jsonDecode(message.data['content'])
+            : message.data['content'];
+        title = content['title'] ?? 'No Title';
+        body = content['payload'] ?? 'No Payload';
+      }
+      const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+      const InitializationSettings initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+      );
+
+      flutterLocalNotificationsPlugin.initialize(initializationSettings,
+          onDidReceiveNotificationResponse: (NotificationResponse notificationResponse) async {
+            print("isNotificationClicked");
+            print(notificationResponse.payload);
+            Map<String, dynamic> dataObj;
+            dataObj=jsonDecode(notificationResponse.payload!);
+            content =dataObj['content'] is String
+                ? jsonDecode(dataObj['content'])
+                : dataObj['content'];
+            if(content["feedbackNotifications"]!=null){
+              Map<String, dynamic> feedbackNotifications=content["feedbackNotifications"] is String?jsonDecode(message.data['feedbackNotifications']):content['feedbackNotifications'];
+              if(feedbackNotifications!=null&&feedbackNotifications["shouldSendFeedbackNotification"]){
+                isNotificationClick=true;
+                List<String>list=[];
+                list.add(feedbackNotifications["assessmentId"]);
+                eventBus.fire(NotificationEvent(list));
+              }
+            }
+      },onDidReceiveBackgroundNotificationResponse: notificationTapBackground);
       flutterLocalNotificationsPlugin.show(
         0,
         title,
-        body,
+        body,payload: jsonEncode(message.data),
         NotificationDetails(
           android: AndroidNotificationDetails(
               channel.id,
               channel.name,color: Colors.green,priority: Priority.high,
               channelDescription: channel.description,colorized: true,
-              icon: 'ic_notification'
+              icon: 'ic_notification',
           ),
         ),
       );

@@ -23,9 +23,12 @@ class Constans {
   static const favourite = "game/game-favourite";
   static const createCollection = "mobile-favourites/add-or-update-collections";
   static const favouritesUpdate = "mobile-favourites/add-or-update-favourite";
+  static const overallFeedback = "mobile-feedback/save-overall-feedback-results";
   static const getFavorites = "mobile-favourites/favourites?userId=";
   static const getCollection = "mobile-favourites/collections?userId=";
   static const updateAssessment = "survey/save-survey-results";
+  static const updateFeedbackSurvey = "feedback/save-feedback-results";
+  static const getAssessmentList = "feedback/feedback-questions?feedbackId=";
 
   static const DATE_FORMAT_1 = "yyyy-MM-dd'T'HH:mm:ssZ";
 }

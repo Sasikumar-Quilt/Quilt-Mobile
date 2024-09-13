@@ -34,7 +34,7 @@ class MainContainerWidget extends StatefulWidget {
 }
 
 class HomeWidgetState extends State<MainContainerWidget>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin , WidgetsBindingObserver{
   static HomeWidgetState? of(BuildContext context) {
     return (context
                 .dependOnInheritedWidgetOfExactType<_HomeWidgetStateProvider>()
@@ -61,11 +61,24 @@ class HomeWidgetState extends State<MainContainerWidget>
     updateRouteName();
     return false;
   }
+@override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    print("object111");
+  }
+  static void setupListener() {
+     const platform = MethodChannel('com.quilt/communication');
 
-
+    platform.setMethodCallHandler((MethodCall call) async {
+      if (call.method == "onAppDestroy") {
+        // Handle app destroy message
+        print("App is being destroyed.");
+        // Perform any cleanup or save operations
+      }
+    });
+  }
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
   }
@@ -102,6 +115,11 @@ class HomeWidgetState extends State<MainContainerWidget>
     super.didUpdateWidget(oldWidget);
     print(oldWidget);
     print("oldWidget111");
+  }
+  @override
+  void dispose() {
+    super.dispose();
+    print("disposed");
   }
 
   @override
@@ -141,7 +159,7 @@ class HomeWidgetState extends State<MainContainerWidget>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.pink.withOpacity(0.6),
+                              color: Color(0xffDA328D).withOpacity(0.6),
                               blurRadius: 20,
                               spreadRadius: 8,
                             ),
@@ -160,7 +178,7 @@ class HomeWidgetState extends State<MainContainerWidget>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.pink.withOpacity(0.6),
+                              color: Color(0xff40A1FB).withOpacity(0.6),
                               blurRadius: 20,
                               spreadRadius: 8,
                             ),
@@ -168,9 +186,9 @@ class HomeWidgetState extends State<MainContainerWidget>
                         ):null,
                           child: SvgPicture.asset(
                               _currentIndex==1? "assets/images/bookmark_selected.svg":"assets/images/BookmarkSimple.svg",
-                              semanticsLabel: 'Acme Logo',color: _currentIndex==1?Color(0xffDA328D):null),
+                              semanticsLabel: 'Acme Logo',color: _currentIndex==1?Color(0xff40A1FB):null),
                         ),
-                        Container(margin: EdgeInsets.only(top: 5),child: Text("Favorites",style: TextStyle(color: _currentIndex==1?Color(0xffDA328D):Color(0xff888888),fontFamily: "Causten-Medium"),),)
+                        Container(margin: EdgeInsets.only(top: 5),child: Text("Favorites",style: TextStyle(color: _currentIndex==1?Color(0xff40A1FB):Color(0xff888888),fontFamily: "Causten-Medium"),),)
                       ],),margin: EdgeInsets.only(right: 0),),onTap: (){
                         _onTabTapped(1);
                       },),
@@ -274,4 +292,9 @@ class HomeObserver extends RouteObserver<PageRoute<dynamic>> {
     updateRoutes(isShowBottom,currentRouteName);
     super.didPop(route, previousRoute);
   }
+   @override
+   void didRemove(Route route, Route? previousRoute) {
+     super.didRemove(route, previousRoute);
+     print("didRemove1");
+   }
 }

@@ -28,7 +28,45 @@ class NetworkApiService extends BaseApiService {
     }
     return responseJson;
   }
+@override
+  Future putRequest(String url, Map<String, dynamic> jsonBody, Status status) async {
+  dynamic responseJson;
+  try {
+    print("postRequest");
+    Map<String, String> requestHeaders;
+    if(status==Status.MOBILE_NUMBER_LOGIN){
+      requestHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': "Bearer 11b623f7-cb76-4130-a7d5-ba24eb1590d6"
+      };
+    }else{
+      requestHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': "Bearer ${PreferenceUtils.getString(PreferenceUtils.SESSION_TOKEN, "")}"
+      };
 
+    }
+    String baseUrl=status==Status.FCM?BaseApiService.fcm_base:BaseApiService.baseUrl + url;
+    if(status==Status.USER_EVENT){
+      baseUrl=BaseApiService.user_event;
+    }
+    print(baseUrl);
+    http.Response response = await http.put(Uri.parse(baseUrl),
+        body: jsonEncode(jsonBody), headers: requestHeaders);
+    print(jsonEncode(jsonBody));
+    print("postResponse");
+    //responseJson = returnResponse(response, status);
+    if(response.statusCode==200){
+      responseJson = ApiResponse(Status.COMPLETED, responseJson, "");
+    }else{
+      responseJson = ApiResponse(Status.ERROR, responseJson, "");
+    }
+  } on SocketException {
+    responseJson = ApiResponse(Status.ERROR, responseJson, "No Internet Connection");
+    //throw FetchDataException('No Internet Connection');
+  }
+  return responseJson;
+  }
   @override
   Future getResponse(String url, Status status) async {
     dynamic responseJson;
@@ -70,7 +108,11 @@ class NetworkApiService extends BaseApiService {
         };
 
       }
-      response = await http.post(Uri.parse(status==Status.FCM?BaseApiService.fcm_base:BaseApiService.baseUrl + url),
+      String baseUrl=status==Status.FCM?BaseApiService.fcm_base:BaseApiService.baseUrl + url;
+      if(status==Status.USER_EVENT){
+        baseUrl=BaseApiService.user_event;
+      }
+      response = await http.post(Uri.parse(baseUrl),
           body: jsonEncode(jsonBody), headers: requestHeaders);
 
       print(BaseApiService.baseUrl + url);
@@ -78,7 +120,8 @@ class NetworkApiService extends BaseApiService {
       print("postResponse");
       responseJson = returnResponse(response, status);
     } on SocketException {
-      throw FetchDataException('No Internet Connection');
+      responseJson = ApiResponse(Status.ERROR, responseJson, "No Internet Connection");
+      //throw FetchDataException('No Internet Connection');
     }
     return responseJson;
   }
@@ -96,7 +139,9 @@ class NetworkApiService extends BaseApiService {
       case 200:
       case 500:
       case 401:
-        responseJson = jsonDecode(response.body);
+        if(response.body.isNotEmpty){
+          responseJson = jsonDecode(response.body);
+        }
         log(responseJson.toString());
         errorMessage = "success";
         break;

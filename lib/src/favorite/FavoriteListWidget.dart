@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../main.dart';
+import '../Analytics/UserTrackingHelper.dart';
 import '../api/ApiHelper.dart';
 import '../api/BaseApiService.dart';
 import '../api/NetworkApiService.dart';
@@ -25,11 +27,13 @@ FavoriteListObject? favoriteListObject;
 bool isNewCollection=false;
 bool isEnable=false;
   TextEditingController mobileNumberCntrl = new TextEditingController();
+bool isApiCalling=false;
+  UserTrackingHelper? userTrackingHelper;
 
   @override
   void initState() {
     super.initState();
-
+    userTrackingHelper=UserTrackingHelper();
   }
   getArgs() {
     if (!isArg) {
@@ -52,147 +56,157 @@ getArgs();
           showActionModel();
         },)
     ],
-    ),backgroundColor: Colors.black,body: Container(child:Container(child: ListView.builder(
-      padding: EdgeInsets.only(left: 16,right: 16,top: 16,bottom: 16),shrinkWrap: true,
-      itemCount: contentList.length,
-      itemBuilder: (context,int index) {
-        return InkWell(child: Container(margin: EdgeInsets.only(top: 10,bottom: 10),child: Row(crossAxisAlignment: CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,children: [
-          Container(decoration: BoxDecoration(color: Color(0xff272727),border: Border.all(color: Color(0xff3D3D3D)),borderRadius: BorderRadius.circular(15)),child:
-          Container(),padding: EdgeInsets.only(right: 7,left: 7,top: 7,bottom: 7),height: 55,width: 55,),
-          Expanded(child: Container(child: Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
+    ),backgroundColor: Colors.black,body: Container(child:Container(height: double.infinity,child: Stack(children: [
+      ListView.builder(
+        padding: EdgeInsets.only(left: 16,right: 16,top: 16,bottom: 16),shrinkWrap: true,
+        itemCount: contentList.length,
+        itemBuilder: (context,int index) {
+          return InkWell(child: Container(margin: EdgeInsets.only(top: 10,bottom: 10),child: Row(crossAxisAlignment: CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,children: [
+            Container(decoration: BoxDecoration(color: Color(0xff272727),border: Border.all(color: Color(0xff3D3D3D)),borderRadius: BorderRadius.circular(15)),child:
+            Container(),padding: EdgeInsets.only(right: 7,left: 7,top: 7,bottom: 7),height: 55,width: 55,),
+            Expanded(child: Container(child: Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
 
-            Container(child:  Text(
-              contentList![index].contentName!,
-              style: TextStyle(fontSize: 16.0, fontFamily: "Causten-Medium",color: Colors.white),
-            ),margin: EdgeInsets.only(top: 0),),
-            Container(margin: EdgeInsets.only(top: 7),child: Row(children: [
-              Container(child: SvgPicture.asset(contentTypeImage(contentList![
-              index]
-                  .contentType!
-                  .toLowerCase()),color: Color(0xff5D5D5D),),margin: EdgeInsets.only(right: 5),),
-              Container(child:  Text(getContentType(contentList![
-              index]
-                  .contentType!)+' . '+contentList![index].contentDuration!+" min",  style: TextStyle(fontSize: 12.0, fontFamily: "Causten-Regular",color: Color(0xff5D5D5D)),),margin: EdgeInsets.only(top: 2),)
-            ],),),
-          ],),margin: EdgeInsets.only(left: 12),)),
-          InkWell(child: Container(child:Icon(Icons.bookmark,color: Color(0xff5D5D5D),),alignment: Alignment.center,),onTap: (){
-            updateFavorite(contentList![
-            index].id!,favoriteListObject!.collectionId,index);
-          },)
+              Container(child:  Text(
+                contentList![index].contentName!,
+                style: TextStyle(fontSize: 16.0, fontFamily: "Causten-Medium",color: Colors.white),
+              ),margin: EdgeInsets.only(top: 0),),
+              Container(margin: EdgeInsets.only(top: 7),child: Row(children: [
+                Container(child: SvgPicture.asset(contentTypeImage(contentList![
+                index]
+                    .contentType!
+                    .toLowerCase()),color: Color(0xff5D5D5D),),margin: EdgeInsets.only(right: 5),),
+                Container(child:  Text(getContentType(contentList![
+                index]
+                    .contentType!)+' . '+contentList![index].contentDuration!+" min",  style: TextStyle(fontSize: 12.0, fontFamily: "Causten-Regular",color: Color(0xff5D5D5D)),),margin: EdgeInsets.only(top: 2),)
+              ],),),
+            ],),margin: EdgeInsets.only(left: 12),)),
+            InkWell(child: Container(child:Icon(Icons.bookmark,color: Color(0xff40A1FB),),alignment: Alignment.center,),onTap: (){
+              updateFavorite(contentList![
+              index].id!,favoriteListObject!.collectionId,index);
+            },)
 
-        ],),),onTap: (){
-          print("contentType");
-          print(contentList![index]
-              .contentType);
-          print(contentList![index]
-              .audioURL);
-          print(contentList![index]
-              .videoURL);
-
-          if (contentList![index]
-              .contentType ==
-              "JOURNAL") {
+          ],),),onTap: (){
+            print("contentType");
             print(contentList![index]
-                .contentUrl!);
-            Navigator.pushNamed(
-                context,
-                HomeWidgetRoutes
-                    .JournalWidget,
-                arguments: {
-                  "url": contentList![
-                  index]
-                });
-          } else if (contentList![index]
-              .contentType ==
-              "ASSESSMENT") {
-            Navigator.pushNamed(context,
-                HomeWidgetRoutes.AssessmentWidget,
-                arguments: {
-                  "url": contentList![index]
-                });
-          } else if ((contentList![index]
-              .contentType ==
-              "EMI")||(contentList![
-          index]
-              .contentType ==
-          "INFO_TIDBITS")||(contentList![
-          index]
-              .contentType ==
-              "INFO_TIDBITS_OCD")||(contentList![
-          index]
-              .contentType ==
-              "INFO_TIDBITS_GENERAL")) {
+                .contentType);
             print(contentList![index]
-                .contentUrl!);
-            Navigator.pushNamed(
-                context,
-                HomeWidgetRoutes
-                    .EmiWidget,
-                arguments: {
-                  "url": contentList![
-                  index]
-                });
-          } else {
+                .audioURL);
+            print(contentList![index]
+                .videoURL);
+            userTrackingHelper!.saveUserEntries("content_entry",contentList![index].contentId!);
+
             if (contentList![index]
-                .contentFormat ==
-                "VIDEO") {
+                .contentType ==
+                "JOURNAL") {
+              print(contentList![index]
+                  .contentUrl!);
               Navigator.pushNamed(
                   context,
                   HomeWidgetRoutes
-                      .VideoplayerWidget,
+                      .JournalWidget,
                   arguments: {
                     "url": contentList![
                     index]
                   }).then((value) => {
+              userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
+
               });
-            }else if (contentList![index]
-                .contentFormat ==
-                "AUDIO") {
-              setState(() {});
+            } else if (contentList![index]
+                .contentType ==
+                "ASSESSMENT") {
+              Navigator.pushNamed(context,
+                  HomeWidgetRoutes.AssessmentWidget,
+                  arguments: {
+                    "url": contentList![index]
+                  }).then((value) => {
+                userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
+              });
+            } else if ((contentList![index]
+                .contentType ==
+                "EMI")||(contentList![
+            index]
+                .contentType ==
+                "INFO_TIDBITS")||(contentList![
+            index]
+                .contentType ==
+                "INFO_TIDBITS_OCD")||(contentList![
+            index]
+                .contentType ==
+                "INFO_TIDBITS_GENERAL")) {
+              print(contentList![index]
+                  .contentUrl!);
               Navigator.pushNamed(
                   context,
                   HomeWidgetRoutes
-                      .AudioPlayerWidget,
+                      .EmiWidget,
                   arguments: {
                     "url": contentList![
                     index]
                   }).then((value) => {
+                userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
               });
             } else {
-              Navigator.pushNamed(
-                  context,
-                  HomeWidgetRoutes
-                      .webScreenScreen,
-                  arguments: {
-                    "url": contentList![
-                    index]
-                  });
+              if (contentList![index]
+                  .contentFormat ==
+                  "VIDEO") {
+                Navigator.pushNamed(
+                    context,
+                    HomeWidgetRoutes
+                        .VideoplayerWidget,
+                    arguments: {
+                      "url": contentList![
+                      index]
+                    }).then((value) => {
+                  userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
+                });
+              }else if (contentList![index]
+                  .contentFormat ==
+                  "AUDIO") {
+                setState(() {});
+                Navigator.pushNamed(
+                    context,
+                    HomeWidgetRoutes
+                        .AudioPlayerWidget,
+                    arguments: {
+                      "url": contentList![
+                      index]
+                    }).then((value) => {
+                  userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
+                });
+              } else {
+                Navigator.pushNamed(
+                    context,
+                    HomeWidgetRoutes
+                        .webScreenScreen,
+                    arguments: {
+                      "url": contentList![
+                      index]
+                    }).then((value) => {
+                      userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
+                });
+              }
             }
-          }
-        },);
-      },
-    ),)/*Column(crossAxisAlignment: CrossAxisAlignment.start,mainAxisSize: MainAxisSize.max,children: [
-
-      *//*Container(child: Column(children: [
-
-       ,
-       *//**//* Divider(color: Color(0xff3D3D3D),),
-        Container(alignment: Alignment.topLeft,child:  Text(
-          "Recommended",textAlign: TextAlign.start,
-          style: TextStyle(fontSize: 18.0, fontFamily: "Causten-Medium",color: Colors.white),
-        ),margin: EdgeInsets.only(top: 30,left: 15),),
-        Container(margin: EdgeInsets.only(top: 20,left: 15),child: Row(children: [
-        Container(decoration: BoxDecoration(color: Color(0xff272727),border: Border.all(color: Color(0xff3D3D3D)),borderRadius: BorderRadius.circular(15)),child:
-        Container(child:  Container(child:SvgPicture.asset("assets/images/search1.svg",height: 50,width: 50,fit: BoxFit.scaleDown,color: Color(0xff5D5D5D),),),),padding: EdgeInsets.only(right: 7,left: 7,top: 7,bottom: 7),height: 55,width: 55,),
-          Container(alignment: Alignment.topLeft,child:  Text(
-            "Find similar",textAlign: TextAlign.start,
-            style: TextStyle(fontSize: 16.0, fontFamily: "Causten-Medium",color: Colors.white),
-          ),margin: EdgeInsets.only(top: 0,left: 15),)
-      ],),)*//**//*
-      ],),)*//*
-    ],)*/),);
+          },);
+        },
+      ),
+      isApiCalling?Positioned(top: 0,bottom: 0,left: 0,right: 0,
+        child:  Container(
+          height: 150,
+          width: 150,
+          child: Center(
+              child: Lottie.asset(
+                  "assets/images/feed_preloader.json",height: 150,width: 150)
+          ),
+        ),
+      ):Positioned(top: 0,bottom: 0,left: 0,right: 0,child: Container(),)
+    ],),)),);
   }
   Future<void> updateFavorite(String id,String collectionId,int pos) async {
+    isApiCalling=true;
+    setState(() {
+
+    });
+
     ApiResponse? apiResponse = await apiHelper.updateFavorite(id,collectionId,false);
     LoginResponse loginResponse=LoginResponse.fromJson(apiResponse.data);
     if(loginResponse.status==200){
@@ -201,13 +215,19 @@ getArgs();
       contsList.add(contentList![pos]);
       eventBus.fire(MyEvent(contsList));
       contentList!.removeAt(pos);
+      isApiCalling=false;
+      setState(() {
+
+      });
+    }else{
+      isApiCalling=false;
       setState(() {
 
       });
     }
   }
   String getContentType(String lowerCase){
-    if ((lowerCase.toLowerCase()=="positive_meditation")|| (lowerCase.toLowerCase()=="mantra_meditation")||(lowerCase.toLowerCase()=="negative_meditation")) {
+    if ((lowerCase.toLowerCase()=="positive_meditation")|| (lowerCase.toLowerCase()=="mantra_meditation")||(lowerCase.toLowerCase()=="negative_meditation")||(lowerCase.toLowerCase()=="mindfulness_meditation")) {
       return "MEDITATION";
     }else if((lowerCase.toLowerCase() == "hypnotic_induction")){
       return "HYPNOSIS";
@@ -249,12 +269,21 @@ getArgs();
     );
   }
   Future<void> deleteCollection() async {
+    isApiCalling=true;
+    setState(() {
+
+    });
     ApiResponse? apiResponse = await apiHelper.deleteCollection(favoriteListObject!.collectionId);
     LoginResponse loginResponse=LoginResponse.fromJson(apiResponse.data);
     if(loginResponse.status==200){
       eventBus.fire(MyEvent(contentList!));
 
       Navigator.of(context).pop({"isDeleted":true});
+    }else{
+      isApiCalling=true;
+      setState(() {
+
+      });
     }
   }
   Future<void> createCollectionApi(String collectionName) async {
@@ -406,7 +435,7 @@ getArgs();
       return "assets/images/moon.svg";
     } else if (lowerCase == "game") {
       return "assets/images/game.svg";
-    } else if ((lowerCase == "meditation") || (lowerCase == "mindfulness") || (lowerCase=="positive_meditation")|| (lowerCase=="mantra_meditation")||(lowerCase=="negative_meditation")) {
+    } else if ((lowerCase == "meditation") || (lowerCase == "mindfulness") || (lowerCase=="positive_meditation")|| (lowerCase=="mantra_meditation")||(lowerCase=="negative_meditation")||(lowerCase=="mindfulness_meditation")) {
       return "assets/images/meditation.svg";
     } else if (lowerCase == "breath") {
       return "assets/images/wind.svg";

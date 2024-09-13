@@ -40,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
       statusBarBrightness: Brightness.dark, // Icon brightness for iOS
     ));
   }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(child: Scaffold(backgroundColor: Colors.black,

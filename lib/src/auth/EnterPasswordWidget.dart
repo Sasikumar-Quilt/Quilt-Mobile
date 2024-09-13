@@ -128,7 +128,7 @@ class EnterPasswordWidgetState extends BasePageState<EnterPasswordWidget> {
                       borderSide:const BorderSide(color: Color(0xff131314), width: 1.9), // No border
                       borderRadius: BorderRadius.circular(10), // Circular border
                     ),
-                    hintText: "●",
+                    hintText: "",
                     counterText: "",
                     contentPadding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
                     hintStyle: TextStyle(color: Color(0xFF40A1FB), fontSize: 20),

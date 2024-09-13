@@ -186,6 +186,19 @@ class ApiHelper {
     await baseApiService.postResponse(Constans.createCollection,request, Status.METRIC_DATA);
     return response;
   }
+  Future<ApiResponse> updateOverallFeedback(String rating,String overallFeedback) async {
+    var request;
+    request = {
+      "userId": PreferenceUtils.getString(PreferenceUtils.USER_ID, ""),
+      "rating": rating,
+      "overallFeedback": overallFeedback,
+    };
+
+    BaseApiService baseApiService = NetworkApiService();
+    ApiResponse response =
+    await baseApiService.postResponse(Constans.overallFeedback,request, Status.METRIC_DATA);
+    return response;
+  }
   Future<ApiResponse> logContent(String id,bool isFav,bool isContent) async {
     var request;
     if(isContent){
@@ -369,6 +382,39 @@ class ApiHelper {
     BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateAssessment,request, Status.METRIC_DATA);
+    return response;
+  }
+  Future<ApiResponse> updateFeedbackSurvey(String surveyId,List<dynamic>answer) async {
+    DateTime now = DateTime.now();
+    DateFormat dateFormat = DateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'");
+
+    String formattedDate = dateFormat.format(now);
+    String timeZoneOffset = now.timeZoneOffset.isNegative ? '-' : '+';
+    timeZoneOffset += now.timeZoneOffset.abs().inHours.toString().padLeft(2, '0');
+    timeZoneOffset += (now.timeZoneOffset.inMinutes.remainder(60)).toString().padLeft(2, '0');
+
+    var request = {
+      "userId": PreferenceUtils.getString(PreferenceUtils.USER_ID, ""),
+      "feedbackId": surveyId,
+      "date": '$formattedDate$timeZoneOffset',
+      "questions": answer
+    };
+    BaseApiService baseApiService = NetworkApiService();
+    ApiResponse response =
+    await baseApiService.postResponse(Constans.updateFeedbackSurvey,request, Status.METRIC_DATA);
+    return response;
+  }
+  Future<ApiResponse> updateUserEvent(dynamic request) async {
+
+    BaseApiService baseApiService = NetworkApiService();
+    ApiResponse response =
+    await baseApiService.putRequest(Constans.updateContentFeedback,request, Status.USER_EVENT);
+    return response;
+  }
+  Future<ApiResponse> getAssessmentList(String id) async {
+    BaseApiService baseApiService = NetworkApiService();
+    ApiResponse response =
+    await baseApiService.getResponse(Constans.getAssessmentList+id, Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
 }

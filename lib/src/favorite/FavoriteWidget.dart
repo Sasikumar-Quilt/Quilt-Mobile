@@ -58,7 +58,7 @@ bool isApiContentLoading=true;
     return  Scaffold(backgroundColor: Colors.black,body: Container(child:Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
       Container(margin: EdgeInsets.only(left: 15,top: 30),child: Text("Favorites",style: TextStyle(color: Colors.white,fontSize: 24,fontFamily: "Causten-Medium"),),)
       ,!isApiContentLoading&&favLists.isEmpty?Container(height: 500,alignment: Alignment.center,child: Column(crossAxisAlignment:CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,mainAxisSize: MainAxisSize.max,children: [
-        Container(child: Image.asset("assets/images/book1.png"),height: 40,width: 40,),
+        Container(child: Image.asset("assets/images/book1.png"),height: 60,width: 60,),
         Container(margin: EdgeInsets.only(left: 15,top: 30),child: Text("No favorites in your library yet",style: TextStyle(color: Colors.white,fontSize: 20,fontFamily: "Causten-Medium"),),)
 
         ,Container(margin: EdgeInsets.only(left: 15,top: 10),child: Text("Any content you bookmark and add to \nyour favorites will appear here.",textAlign: TextAlign.center,style: TextStyle(color: Color(0xff888888),fontSize: 14,fontFamily: "Causten-Regular"),),)

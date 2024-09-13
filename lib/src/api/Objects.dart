@@ -333,6 +333,10 @@ class ContentObj {
       contentUrl = json["content"]["content"]["text"];
       animations = json["content"]["content"]["imageURL"];
       assessmentList=AssessmentList.fromJson(json["content"]["content"]);
+    }else if(contentType=="FEEDBACK"){
+      print("FEEDBACKFEEDBACK");
+      print(json["content"]["content"]);
+      assessmentList=AssessmentList.fromJson(json["content"]["content"]);
     }else{
       if(isVideoAudio){
         audioURL = json["content"]["content"]["content"]??"";
@@ -535,6 +539,14 @@ class FavoriteList {
     }
   }
 }
+class AssessmentResult{
+  AssessmentList? assessmentList;
+  AssessmentResult.from(Map<String, dynamic> json){
+    if(json["data"]!=null){
+      assessmentList=AssessmentList.fromJson(json);
+    }
+  }
+}
 class AssessmentList{
   String assessmentName="";
   String assessmentTitle="";
@@ -543,8 +555,16 @@ class AssessmentList{
   String id="";
   List<AssessmentObject> assessment_questions=[];
   AssessmentList.fromJson(Map<String, dynamic> json){
-    if(json["assessment"]!=null){
-      var obj=json["assessment"];
+    if(json["assessment"]!=null||json["feedback"]!=null||json["data"]!=null){
+      var obj;
+      if(json["assessment"]!=null){
+        obj=json["assessment"];
+      }else if(json["data"]!=null){
+        obj=json["data"];
+      }else{
+        obj=json["feedback"];
+      }
+
       assessmentName=obj["assessmentName"]??"";
       id=obj["id"]??"";
       assessmentTitle=obj["assessmentTitle"]??"";
@@ -559,14 +579,17 @@ class AssessmentList{
         assessmentObject.questionType=questionList[i]["questionType"];
         List<String>optionList=[];
         AssessmentQuestionsOptions assessmentQuestionsOptions=new AssessmentQuestionsOptions();
-        assessmentQuestionsOptions.id=questionList[i]["assessment_questions_options"]["id"];
-        for(int j=0;j<questionList[i]["assessment_questions_options"]["options"].length;j++){
-          optionList.add(questionList[i]["assessment_questions_options"]["options"][j]);
+        if(questionList[i]["assessment_questions_options"]!=null){
+          assessmentQuestionsOptions.id=questionList[i]["assessment_questions_options"]["id"];
+          for(int j=0;j<questionList[i]["assessment_questions_options"]["options"].length;j++){
+            optionList.add(questionList[i]["assessment_questions_options"]["options"][j]);
+          }
+          print("optionList");
+          print(optionList.length);
+          assessmentQuestionsOptions.options=optionList;
+          assessmentObject.assessment_questions_options=assessmentQuestionsOptions;
         }
-        print("optionList");
-        print(optionList.length);
-        assessmentQuestionsOptions.options=optionList;
-        assessmentObject.assessment_questions_options=assessmentQuestionsOptions;
+
         assessment_questions.add(assessmentObject);
       }
     }
@@ -586,6 +609,16 @@ class AssessmentObject{
 class AssessmentQuestionsOptions{
   String id="";
   List<String> options=[];
+}
+class NotificationEvent extends AppEvent{
+  List<String> id;
+  NotificationEvent(this.id);
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => id;
+
+
 }
 class MyEvent extends AppEvent{
   List<ContentObj>list=[];
