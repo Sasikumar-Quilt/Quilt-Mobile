@@ -223,6 +223,11 @@ RemoteConfigService? remoteConfigService;
     }
   }
   Future<void> getNotificationDetails() async {
+    if(!PushNotificationService.checkIfInitialized()){
+      print("checkIfInitialized");
+       init();
+       return;
+    }
     final NotificationAppLaunchDetails? notificationAppLaunchDetails =
     await PushNotificationService.flutterLocalNotificationsPlugin
         .getNotificationAppLaunchDetails();
@@ -302,7 +307,7 @@ RemoteConfigService? remoteConfigService;
             PreferenceUtils.getString(PreferenceUtils.MOODID, ""), context);
       }
       getDefaultMoods();
-//checkForAppUpdate();
+     checkForAppUpdate();
     });
     getFirebaseToken();
     updateContentFav();
@@ -1616,6 +1621,8 @@ RemoteConfigService? remoteConfigService;
   }
 
   void getContentList(String id, ctx) async {
+    print(currentPage);
+    print("getContentList");
     if(moodId!=id){
       userTrackingHelper!.sendUserTrackingRequest();
     }

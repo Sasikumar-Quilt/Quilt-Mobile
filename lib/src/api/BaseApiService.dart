@@ -1,8 +1,8 @@
 
 
 abstract class BaseApiService{
-  static String baseUrl ="https://api-staging.q-u-i-l-t.com/api/";//"https://nocd-prod.q-u-i-l-t.com/api/";//"https://api-staging.q-u-i-l-t.com/api/";
-  static String fcm_base = "https://notifications-staging.q-u-i-l-t.com/notifications/saveDeviceId";//""https://etp.candelatech.in/app/";
+  static String baseUrl ="https://nocd-prod.q-u-i-l-t.com/api/";//"https://demo.q-u-i-l-t.com/api/";//"https://nocd-prod.q-u-i-l-t.com/api/";//"https://api-staging.q-u-i-l-t.com/api/";
+  static String fcm_base = "https://notifications.q-u-i-l-t.com/notifications/saveDeviceId";//"https://notifications-staging.q-u-i-l-t.com/notifications/saveDeviceId";
   static String user_event = "https://api-staging.q-u-i-l-t.com/api/events/add";//""https://etp.candelatech.in/app/";
   Future<dynamic> getResponse(String endPoint,Status status);
   Future<dynamic> postResponse(String endPoint,Map<String, Object> jsonBody,Status status);

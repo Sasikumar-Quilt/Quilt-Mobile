@@ -182,5 +182,8 @@ class PushNotificationService{
       );
     }
   }
+  static bool checkIfInitialized() {
+    return isFlutterLocalNotificationsInitialized;
+  }
 }
 
