@@ -24,7 +24,7 @@ import 'package:quilt/src/auth/EditProfile.dart';
 import 'package:quilt/src/auth/EnterAgeWidget.dart';
 import 'package:quilt/src/auth/EnterEmailWidget.dart';
 import 'package:quilt/src/auth/EnterPasswordWidget.dart';
-import 'package:quilt/src/auth/EnterUserNameWidget.dart';
+import 'package:quilt/src/auth/CreateProfileWidget.dart';
 import 'package:quilt/src/auth/GenderWidget.dart';
 import 'package:quilt/src/auth/MobileNumberWidget.dart';
 import 'package:quilt/src/auth/OtpWidget.dart';
@@ -62,7 +62,7 @@ final routes = <String, Widget>{
   HomeWidgetRoutes.webScreenScreen:WebviewWidget(),
   HomeWidgetRoutes.profileScreen:ProfileScreen(),
   HomeWidgetRoutes.editProfile:EditProfileScreen(),
-  HomeWidgetRoutes.EnterUserNameWidget:EnterUserNameWidget(),
+  HomeWidgetRoutes.EnterUserNameWidget:CreateProfileWidget(),
   HomeWidgetRoutes.EnterAgeWidget:EnterAgeWidget(),
   HomeWidgetRoutes.GenderWidget:GenderWidget(),
   HomeWidgetRoutes.DashboardWidget:MainContainerWidget(),
