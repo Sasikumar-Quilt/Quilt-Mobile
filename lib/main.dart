@@ -9,6 +9,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:quilt/src/Assessment/AssessmentListWidget.dart';
@@ -29,6 +30,7 @@ import 'package:quilt/src/auth/GenderWidget.dart';
 import 'package:quilt/src/auth/MobileNumberWidget.dart';
 import 'package:quilt/src/auth/OtpWidget.dart';
 import 'package:quilt/src/auth/ProfileWidget.dart';
+import 'package:quilt/src/base/AppEnvironment.dart';
 import 'package:quilt/src/emi/EMIWidget.dart';
 import 'package:quilt/src/favorite/FavoriteListWidget.dart';
 import 'package:quilt/src/favorite/FavoriteWidget.dart';
@@ -112,6 +114,9 @@ class HomeWidgetRoutes{
 IEventBus eventBus = EventBus();
 
 void main() async{
+  print(appFlavor);
+  print("flavor");
+  AppEnvironment.setupEnv(appFlavor);
   /*audioHandler = await AudioService.init(
     builder: () => AudioPlayerHandler(),
     config: const AudioServiceConfig(
@@ -120,7 +125,6 @@ void main() async{
       androidNotificationOngoing: true,
     ),
   );*/
-
   await FastCachedImageConfig.init(clearCacheAfter: const Duration(days: 15));
 
   WidgetsFlutterBinding.ensureInitialized();
@@ -147,6 +151,7 @@ class MyApp extends State<App> {
 @override
   void initState() {
     super.initState();
+
   }
   // This widget is the root of your application.
   @override
