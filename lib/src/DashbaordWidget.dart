@@ -123,166 +123,152 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   bool bIsPlay = false;
   PhoneState status = PhoneState.nothing();
   AudioPlayerManager audioManager = AudioPlayerManager();
-RemoteConfigService? remoteConfigService;
+  RemoteConfigService? remoteConfigService;
   UserTrackingHelper? userTrackingHelper;
+  late MenuController _iFeelMenuController = MenuController();
+
   @override
   void initState() {
     super.initState();
-    if(Platform.isAndroid){
+    if (Platform.isAndroid) {
       getNotificationDetails();
-    }else{
-      FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    } else {
+      FirebaseMessaging.instance
+          .getInitialMessage()
+          .then((RemoteMessage? message) {
         print("getInitialMessage123");
-        if(message!=null){
+        if (message != null) {
           print(message.data);
           print("object");
           print(message.notification);
-          getNotificationIosDetails(message,true);
-        }else{
+          getNotificationIosDetails(message, true);
+        } else {
           init();
         }
       });
     }
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-
       print("onMessageOpenedApp");
 
-      if(message!=null){
+      if (message != null) {
         print(message.data);
-      print("object");
-      print(message.notification);
+        print("object");
+        print(message.notification);
 
-        getNotificationIosDetails(message,false);
+        getNotificationIosDetails(message, false);
       }
-
-
     });
-
-
   }
-  void getNotificationIosDetails(RemoteMessage message,bool isInit){
-    Map<dynamic, dynamic> dataObj= message.data['data'] is String
+
+  void getNotificationIosDetails(RemoteMessage message, bool isInit) {
+    Map<dynamic, dynamic> dataObj = message.data['data'] is String
         ? jsonDecode(message.data['data'])
         : message.data['data'];
-    Map<String, dynamic> content= dataObj['content'] is String
+    Map<String, dynamic> content = dataObj['content'] is String
         ? jsonDecode(dataObj['content'])
         : dataObj['content'];
-    if(content["feedbackNotifications"]!=null){
-      Map<String, dynamic> feedbackNotifications=content["feedbackNotifications"] is String?jsonDecode(message.data['feedbackNotifications']):content['feedbackNotifications'];
-      if(feedbackNotifications!=null&&feedbackNotifications["shouldSendFeedbackNotification"]) {
-        String feedbackId=feedbackNotifications["assessmentId"];
+    if (content["feedbackNotifications"] != null) {
+      Map<String, dynamic> feedbackNotifications =
+          content["feedbackNotifications"] is String
+              ? jsonDecode(message.data['feedbackNotifications'])
+              : content['feedbackNotifications'];
+      if (feedbackNotifications != null &&
+          feedbackNotifications["shouldSendFeedbackNotification"]) {
+        String feedbackId = feedbackNotifications["assessmentId"];
 
-        PushNotificationService.isNotificationClick=true;
-        if(userTrackingHelper!=null){
-          bIsPlay=isPlay;
-          isPlay=false;
+        PushNotificationService.isNotificationClick = true;
+        if (userTrackingHelper != null) {
+          bIsPlay = isPlay;
+          isPlay = false;
           pauseAudio();
-          setState(() {
-
-          });
-          PushNotificationService.isNotificationClick=false;
+          setState(() {});
+          PushNotificationService.isNotificationClick = false;
           Navigator.pushNamed(
-              context,
-              HomeWidgetRoutes
-                  .AssessmentListWidget,
-              arguments: {
-                "feedbackId":feedbackId
-              }).then((value) => {
-            if(bIsPlay){
-              isPlay=true,
-              playAudio(),
-              setState(() {
-
-              })
-            }
-          });
-        }else{
-          Navigator.pushNamed(
-              context,
-              HomeWidgetRoutes
-                  .AssessmentListWidget,
-              arguments: {
-                "feedbackId":feedbackId
-              }).then((value) => {
-            PushNotificationService.isNotificationClick=false,
-            init()
-          });
+              context, HomeWidgetRoutes.AssessmentListWidget, arguments: {
+            "feedbackId": feedbackId
+          }).then((value) => {
+                if (bIsPlay) {isPlay = true, playAudio(), setState(() {})}
+              });
+        } else {
+          Navigator.pushNamed(context, HomeWidgetRoutes.AssessmentListWidget,
+                  arguments: {"feedbackId": feedbackId})
+              .then((value) => {
+                    PushNotificationService.isNotificationClick = false,
+                    init()
+                  });
         }
-      }else{
-        if(isInit){
+      } else {
+        if (isInit) {
           init();
         }
       }
-    }
-   else{
-      if(isInit){
+    } else {
+      if (isInit) {
         init();
       }
-
     }
   }
+
   Future<void> getNotificationDetails() async {
-    if(!PushNotificationService.checkIfInitialized()){
+    if (!PushNotificationService.checkIfInitialized()) {
       print("checkIfInitialized");
-       init();
-       return;
+      init();
+      return;
     }
     final NotificationAppLaunchDetails? notificationAppLaunchDetails =
-    await PushNotificationService.flutterLocalNotificationsPlugin
-        .getNotificationAppLaunchDetails();
+        await PushNotificationService.flutterLocalNotificationsPlugin
+            .getNotificationAppLaunchDetails();
     if (notificationAppLaunchDetails != null &&
         notificationAppLaunchDetails!.didNotificationLaunchApp) {
-      print('Notification payload: ${notificationAppLaunchDetails
-          .notificationResponse}');
-      print('Notification payload: ${notificationAppLaunchDetails
-          .notificationResponse!.payload}');
-      String? data=notificationAppLaunchDetails
-          .notificationResponse!.payload;
-      if(!Utility.isEmpty(data)){
+      print(
+          'Notification payload: ${notificationAppLaunchDetails.notificationResponse}');
+      print(
+          'Notification payload: ${notificationAppLaunchDetails.notificationResponse!.payload}');
+      String? data = notificationAppLaunchDetails.notificationResponse!.payload;
+      if (!Utility.isEmpty(data)) {
         Map<String, dynamic> content;
         Map<String, dynamic> dataObj;
         print("message.data");
         print(data);
-        dataObj=jsonDecode(data!);
+        dataObj = jsonDecode(data!);
         content = dataObj['content'] is String
             ? jsonDecode(dataObj['content'])
             : dataObj['content'];
-        if(content["feedbackNotifications"]!=null){
-          Map<String, dynamic> feedbackNotifications=content["feedbackNotifications"] is String?jsonDecode(content['feedbackNotifications']):content['feedbackNotifications'];
-          if(feedbackNotifications!=null&&feedbackNotifications["shouldSendFeedbackNotification"]){
-            Future.delayed(Duration.zero,(){
+        if (content["feedbackNotifications"] != null) {
+          Map<String, dynamic> feedbackNotifications =
+              content["feedbackNotifications"] is String
+                  ? jsonDecode(content['feedbackNotifications'])
+                  : content['feedbackNotifications'];
+          if (feedbackNotifications != null &&
+              feedbackNotifications["shouldSendFeedbackNotification"]) {
+            Future.delayed(Duration.zero, () {
               Navigator.pushNamed(
-                  context,
-                  HomeWidgetRoutes
-                      .AssessmentListWidget,
-                  arguments: {
-                    "feedbackId":feedbackNotifications["assessmentId"]
-                  }).then((value) => {
-                PushNotificationService.isNotificationClick=false,
-                init()
-              });
+                  context, HomeWidgetRoutes.AssessmentListWidget, arguments: {
+                "feedbackId": feedbackNotifications["assessmentId"]
+              }).then((value) => {
+                    PushNotificationService.isNotificationClick = false,
+                    init()
+                  });
             });
-
-          }else{
+          } else {
             init();
           }
-        }
-        else{
+        } else {
           init();
         }
-      }else{
+      } else {
         init();
       }
-    }else{
+    } else {
       init();
     }
   }
 
-  void init(){
-    userTrackingHelper=UserTrackingHelper();
+  void init() {
+    userTrackingHelper = UserTrackingHelper();
     userTrackingHelper!.init();
-    userTrackingHelper!.saveUserEntries("app_open","");
+    userTrackingHelper!.saveUserEntries("app_open", "");
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light));
@@ -307,20 +293,19 @@ RemoteConfigService? remoteConfigService;
             PreferenceUtils.getString(PreferenceUtils.MOODID, ""), context);
       }
       getDefaultMoods();
-     checkForAppUpdate();
+      checkForAppUpdate();
     });
     getFirebaseToken();
     updateContentFav();
   }
-  void checkForAppUpdate(){
-    remoteConfigService=RemoteConfigService(context);
+
+  void checkForAppUpdate() {
+    remoteConfigService = RemoteConfigService(context);
     remoteConfigService!.initialize().then((value) => {
-      remoteConfigService!. shouldForceUpdate().then((value) => {
-        if(value){
-          showVersionUpdateDialog()
-        }
-      })
-    });
+          remoteConfigService!.shouldForceUpdate().then((value) => {
+                if (value) {showVersionUpdateDialog()}
+              })
+        });
   }
 
   void requestPermission() async {
@@ -370,8 +355,8 @@ RemoteConfigService? remoteConfigService;
       isShowSwipeAnim = true;
       PreferenceUtils.setBool("isSwiped", true);
     }
-    if(!isTapAnim&&isSwiped){
-      isShowTapAnim=true;
+    if (!isTapAnim && isSwiped) {
+      isShowTapAnim = true;
       PreferenceUtils.setBool("isTapAnim", true);
     }
   }
@@ -400,29 +385,18 @@ RemoteConfigService? remoteConfigService;
     eventBus.on<NotificationEvent>().listen((event) {
       List<String> receivedList = event.id;
       print(receivedList.length);
-      if(userTrackingHelper!=null){
-        bIsPlay=isPlay;
-        isPlay=false;
+      if (userTrackingHelper != null) {
+        bIsPlay = isPlay;
+        isPlay = false;
         pauseAudio();
-        setState(() {
-
-        });
-        PushNotificationService.isNotificationClick=false;
+        setState(() {});
+        PushNotificationService.isNotificationClick = false;
         Navigator.pushNamed(
-            context,
-            HomeWidgetRoutes
-                .AssessmentListWidget,
-            arguments: {
-              "feedbackId":receivedList[0]
-            }).then((value) => {
-          if(bIsPlay){
-            isPlay=true,
-            playAudio(),
-            setState(() {
-
-            })
-          }
-        });
+            context, HomeWidgetRoutes.AssessmentListWidget, arguments: {
+          "feedbackId": receivedList[0]
+        }).then((value) => {
+              if (bIsPlay) {isPlay = true, playAudio(), setState(() {})}
+            });
       }
     });
   }
@@ -516,7 +490,7 @@ RemoteConfigService? remoteConfigService;
       int currentTap = PreferenceUtils.getInt("currentTap", 0);
 
       if (state == AppLifecycleState.paused) {
-        userTrackingHelper!.saveUserEntries("app_minimise","");
+        userTrackingHelper!.saveUserEntries("app_minimise", "");
         userTrackingHelper!.sendUserTrackingRequest();
         print("applicationPaused");
         print(currentRouteName);
@@ -541,7 +515,7 @@ RemoteConfigService? remoteConfigService;
           }
         }
       } else if (state == AppLifecycleState.resumed) {
-        userTrackingHelper!.saveUserEntries("app_open","");
+        userTrackingHelper!.saveUserEntries("app_open", "");
         print('app resumed');
         timer?.cancel();
         timer = null;
@@ -637,7 +611,8 @@ RemoteConfigService? remoteConfigService;
                             itemCount: contentList!.length,
                             onPageChanged: (index) async {
                               await pauseAudio();
-                              userTrackingHelper!.saveUserEntries("feed_exit",contentList![pageCount].contentId!);
+                              userTrackingHelper!.saveUserEntries("feed_exit",
+                                  contentList![pageCount].contentId!);
                               pageCount = index;
                               tempPageCount = pageCount;
                               isPlay = true;
@@ -651,19 +626,19 @@ RemoteConfigService? remoteConfigService;
                               }
                               isScroll = true;
 
-                              if(isShowTapAnim){
+                              if (isShowTapAnim) {
                                 isShowTapAnim = false;
-
                               }
                               if (isShowSwipeAnim) {
-                                   isShowSwipeAnim = false;
-                                   isShowTapAnim=true;
-                                   PreferenceUtils.setBool("isTapAnim", true);
+                                isShowSwipeAnim = false;
+                                isShowTapAnim = true;
+                                PreferenceUtils.setBool("isTapAnim", true);
                               }
                               setState(() {});
                               preloadVideos.onPageChanged(index);
                               preloadImages.onPageChanged(index);
-                              userTrackingHelper!.saveUserEntries("feed_entry",contentList![pageCount].contentId!);
+                              userTrackingHelper!.saveUserEntries("feed_entry",
+                                  contentList![pageCount].contentId!);
                             },
                             scrollDirection: Axis.vertical,
                             itemBuilder: (context, index) {
@@ -747,7 +722,10 @@ RemoteConfigService? remoteConfigService;
                                           ),
                                           alignment: Alignment.center,
                                         ),
-                                        (contentList![index].contentType == "FEEDBACK")?Container():bottomView(index)
+                                        (contentList![index].contentType ==
+                                                "FEEDBACK")
+                                            ? Container()
+                                            : bottomView(index)
                                       ],
                                     ),
                                     onTap: () {
@@ -761,7 +739,7 @@ RemoteConfigService? remoteConfigService;
                             },
                           ),
                         )
-                      : isContentListApiRunning&&isClosedBottomSheet
+                      : isContentListApiRunning && isClosedBottomSheet
                           ? Container(
                               child: Lottie.asset(
                                   "assets/images/feed_preloader.json"),
@@ -779,7 +757,8 @@ RemoteConfigService? remoteConfigService;
   }
 
   void handleTap(int index) {
-    userTrackingHelper!.saveUserEntries("content_entry",contentList![index].contentId!);
+    userTrackingHelper!
+        .saveUserEntries("content_entry", contentList![index].contentId!);
     if (contentList![index].contentFormat == "VIDEO") {
       _phoneStateSubscription?.pause();
       isPlay = false;
@@ -789,19 +768,25 @@ RemoteConfigService? remoteConfigService;
           .then((value) => {
                 _phoneStateSubscription?.resume(),
                 updateVideoLastPosition(value, index)
-              }).then((value) => {
-      userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
-      });
+              })
+          .then((value) => {
+                userTrackingHelper!.saveUserEntries(
+                    "content_exit", contentList![index].contentId!)
+              });
     } else if (contentList![index].contentType == "JOURNAL") {
       isPlay = false;
       _phoneStateSubscription?.pause();
       setState(() {});
       print(contentList![index].contentUrl!);
-      Navigator.pushNamed(context, HomeWidgetRoutes.JournalWidget, arguments: {
-        "url": contentList![index],
-        "index": index
-      }).then((value) =>
-          { userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!),isPlay = true, _phoneStateSubscription?.resume(), setState(() {})});
+      Navigator.pushNamed(context, HomeWidgetRoutes.JournalWidget,
+              arguments: {"url": contentList![index], "index": index})
+          .then((value) => {
+                userTrackingHelper!.saveUserEntries(
+                    "content_exit", contentList![index].contentId!),
+                isPlay = true,
+                _phoneStateSubscription?.resume(),
+                setState(() {})
+              });
     } else if (contentList![index].contentType == "EMI" ||
         contentList![index].contentType == "INFO_TIDBITS" ||
         contentList![index].contentType == "INFO_TIDBITS_OCD" ||
@@ -810,26 +795,31 @@ RemoteConfigService? remoteConfigService;
       isPlay = false;
       setState(() {});
       print(contentList![index].contentUrl!);
-      Navigator.pushNamed(context, HomeWidgetRoutes.EmiWidget, arguments: {
-        "url": contentList![index],
-        "index": index
-      }).then((value) =>
-          { userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!),isPlay = true, _phoneStateSubscription?.resume(), setState(() {})});
+      Navigator.pushNamed(context, HomeWidgetRoutes.EmiWidget,
+              arguments: {"url": contentList![index], "index": index})
+          .then((value) => {
+                userTrackingHelper!.saveUserEntries(
+                    "content_exit", contentList![index].contentId!),
+                isPlay = true,
+                _phoneStateSubscription?.resume(),
+                setState(() {})
+              });
     } else if (contentList![index].contentType == "ASSESSMENT") {
-      Navigator.pushNamed(context, HomeWidgetRoutes.AssessmentWidget,
-          arguments: {"url": contentList![index]}).then((value) => {
-        userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
-      });
+      Navigator.pushNamed(
+          context, HomeWidgetRoutes.AssessmentWidget, arguments: {
+        "url": contentList![index]
+      }).then((value) => {
+            userTrackingHelper!
+                .saveUserEntries("content_exit", contentList![index].contentId!)
+          });
     } else if (contentList![index].contentType == "FEEDBACK") {
       Navigator.pushNamed(
-          context,
-          HomeWidgetRoutes
-              .AssessmentListWidget,
-          arguments: {
-            "url":contentList![index]
-          }).then((value) => {
-        userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!)
-      });
+          context, HomeWidgetRoutes.AssessmentListWidget, arguments: {
+        "url": contentList![index]
+      }).then((value) => {
+            userTrackingHelper!
+                .saveUserEntries("content_exit", contentList![index].contentId!)
+          });
     } else if (contentList![index].contentFormat == "AUDIO") {
       _phoneStateSubscription?.pause();
       isPlay = false;
@@ -837,14 +827,22 @@ RemoteConfigService? remoteConfigService;
       setState(() {});
       Navigator.pushNamed(context, HomeWidgetRoutes.AudioPlayerWidget,
               arguments: {"url": contentList![index], "index": index})
-          .then((value) => { userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!),
+          .then((value) => {
+                userTrackingHelper!.saveUserEntries(
+                    "content_exit", contentList![index].contentId!),
                 _phoneStateSubscription?.resume(),
                 updateAudioLastPosition(value, index)
               });
     } else {
       pauseAudio();
-      Navigator.pushNamed(context, HomeWidgetRoutes.webScreenScreen,
-          arguments: {"url": contentList![index]}).then((value) => { userTrackingHelper!.saveUserEntries("content_exit",contentList![index].contentId!),playAudio()});
+      Navigator.pushNamed(
+          context, HomeWidgetRoutes.webScreenScreen, arguments: {
+        "url": contentList![index]
+      }).then((value) => {
+            userTrackingHelper!.saveUserEntries(
+                "content_exit", contentList![index].contentId!),
+            playAudio()
+          });
     }
   }
 
@@ -855,22 +853,77 @@ RemoteConfigService? remoteConfigService;
   Widget buildContentView(int index) {
     if (contentList![index].contentType == "ASSESSMENT") {
       return ImageViewWidget(imageUrl: contentList![index].animations!);
-    }else if(contentList![index].contentType == "FEEDBACK"){
-      return Container(child: Container(alignment: Alignment.center,child: Column(crossAxisAlignment:CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,mainAxisSize: MainAxisSize.max,children: [
-        Container(child: Image.asset("assets/images/feeback_img.png"),height: 60,width: 60,),
-        Container(margin: EdgeInsets.only(left: 15,top: 30),child: Text("Rate your experience",style: TextStyle(color: Colors.white,fontSize: 20,fontFamily: "Causten-Medium"),),)
-
-        ,Container(margin: EdgeInsets.only(left: 15,top: 10),child: Text("Your opinion means the world.\n Please share it with us",textAlign: TextAlign.center,style: TextStyle(color: Color(0xff888888),fontSize: 14,fontFamily: "Causten-Regular"),),)
-        ,GestureDetector(child: Container(padding: EdgeInsets.only(left: 15,top: 8,right: 15,bottom: 8),margin: EdgeInsets.only(top: 25),decoration: BoxDecoration(color: Color(0xff40A1FB),border: Border.all(color: Color(0xff40A1FB)),borderRadius: BorderRadius.circular(30)),child: Row(mainAxisSize: MainAxisSize.min,crossAxisAlignment: CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,children: [
-
-          Container(margin: EdgeInsets.only(left: 8,top: 0),child: Text("Give feedback",textAlign: TextAlign.center,style: TextStyle(color: Colors.black,fontSize: 14,fontFamily: "Causten-Medium"),),)
-
-        ],),),onTap: (){
-
-          //showOpenFeedback();
-
-        },)
-      ],),),);
+    } else if (contentList![index].contentType == "FEEDBACK") {
+      return Container(
+        child: Container(
+          alignment: Alignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Container(
+                child: Image.asset("assets/images/feeback_img.png"),
+                height: 60,
+                width: 60,
+              ),
+              Container(
+                margin: EdgeInsets.only(left: 15, top: 30),
+                child: Text(
+                  "Rate your experience",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontFamily: "Causten-Medium"),
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.only(left: 15, top: 10),
+                child: Text(
+                  "Your opinion means the world.\n Please share it with us",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Color(0xff888888),
+                      fontSize: 14,
+                      fontFamily: "Causten-Regular"),
+                ),
+              ),
+              GestureDetector(
+                child: Container(
+                  padding:
+                      EdgeInsets.only(left: 15, top: 8, right: 15, bottom: 8),
+                  margin: EdgeInsets.only(top: 25),
+                  decoration: BoxDecoration(
+                      color: Color(0xff40A1FB),
+                      border: Border.all(color: Color(0xff40A1FB)),
+                      borderRadius: BorderRadius.circular(30)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        margin: EdgeInsets.only(left: 8, top: 0),
+                        child: Text(
+                          "Give feedback",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                              fontFamily: "Causten-Medium"),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                onTap: () {
+                  //showOpenFeedback();
+                },
+              )
+            ],
+          ),
+        ),
+      );
     }
     if (contentList![index].isVideoAudio ||
         contentList![index].contentFormat == "VIDEO") {
@@ -922,7 +975,8 @@ RemoteConfigService? remoteConfigService;
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  contentList![index].contentType != "ASSESSMENT"||(contentList![index].contentType == "FEEDBACK")
+                  contentList![index].contentType != "ASSESSMENT" ||
+                          (contentList![index].contentType == "FEEDBACK")
                       ? GestureDetector(
                           child: Container(
                             child: SvgPicture.asset(
@@ -979,174 +1033,186 @@ RemoteConfigService? remoteConfigService;
               ),
               alignment: Alignment.topRight,
             ),
-            contentList![index].contentType == "FEEDBACK"?Container(): Container(
-              margin: EdgeInsets.only(bottom: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                      child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        child: TextScrollWidget(
-                          text: contentList![index].contentType == "ASSESSMENT"
-                              ? contentList![index]
-                                  .assessmentList!
-                                  .assessmentTitle!
-                              : contentList![index].contentName!,
-                          scrollSpeed: pageCount == index ? 50 : 0,
-                          shouldScroll: true,
-                        ),
-                      ),
-                      contentList![index].hashtags.isNotEmpty
-                          ? Container(
-                              margin: EdgeInsets.only(top: 5),
-                              child: SingleChildScrollView(
-                                  child: Row(
-                                    children: getHashTags(
-                                        contentList![index].hashtags),
-                                  ),
-                                  scrollDirection: Axis.horizontal),
-                            )
-                          : Container(),
-                      contentList![index].contentType == "ASSESSMENT"
-                          ? Container(
-                              child: Column(
-                                children: [
-                                  Container(
-                                    margin:
-                                        EdgeInsets.only(bottom: 10, top: 10),
-                                    child: Row(
+            contentList![index].contentType == "FEEDBACK"
+                ? Container()
+                : Container(
+                    margin: EdgeInsets.only(bottom: 20),
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              child: TextScrollWidget(
+                                text: contentList![index].contentType ==
+                                        "ASSESSMENT"
+                                    ? contentList![index]
+                                        .assessmentList!
+                                        .assessmentTitle!
+                                    : contentList![index].contentName!,
+                                scrollSpeed: pageCount == index ? 50 : 0,
+                                shouldScroll: true,
+                              ),
+                            ),
+                            contentList![index].hashtags.isNotEmpty
+                                ? Container(
+                                    margin: EdgeInsets.only(top: 5),
+                                    child: SingleChildScrollView(
+                                        child: Row(
+                                          children: getHashTags(
+                                              contentList![index].hashtags),
+                                        ),
+                                        scrollDirection: Axis.horizontal),
+                                  )
+                                : Container(),
+                            contentList![index].contentType == "ASSESSMENT"
+                                ? Container(
+                                    child: Column(
                                       children: [
                                         Container(
-                                          child: SvgPicture.asset(
-                                              "assets/images/user_ass.svg"),
-                                        ),
-                                        Container(
-                                          margin: EdgeInsets.only(left: 10),
-                                          child: Text(
-                                            "Take a self-assessment to curate a\n personalized experience within the app",
-                                            textAlign: TextAlign.start,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Color(0xffF8F7F8),
-                                              fontFamily: "Causten-Regular",
-                                            ),
+                                          margin: EdgeInsets.only(
+                                              bottom: 10, top: 10),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                child: SvgPicture.asset(
+                                                    "assets/images/user_ass.svg"),
+                                              ),
+                                              Container(
+                                                margin:
+                                                    EdgeInsets.only(left: 10),
+                                                child: Text(
+                                                  "Take a self-assessment to curate a\n personalized experience within the app",
+                                                  textAlign: TextAlign.start,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Color(0xffF8F7F8),
+                                                    fontFamily:
+                                                        "Causten-Regular",
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: EdgeInsets.only(bottom: 10),
-                                    child: Row(
-                                      children: [
                                         Container(
-                                          child: SvgPicture.asset(
-                                              "assets/images/target_ass.svg"),
-                                        ),
-                                        Container(
-                                          margin: EdgeInsets.only(left: 10),
-                                          child: Text(
-                                            "Discover strategies that align with your\n interests and goals",
-                                            textAlign: TextAlign.start,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Color(0xffF8F7F8),
-                                              fontFamily: "Causten-Regular",
-                                            ),
+                                          margin: EdgeInsets.only(bottom: 10),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                child: SvgPicture.asset(
+                                                    "assets/images/target_ass.svg"),
+                                              ),
+                                              Container(
+                                                margin:
+                                                    EdgeInsets.only(left: 10),
+                                                child: Text(
+                                                  "Discover strategies that align with your\n interests and goals",
+                                                  textAlign: TextAlign.start,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Color(0xffF8F7F8),
+                                                    fontFamily:
+                                                        "Causten-Regular",
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
+                                        )
                                       ],
                                     ),
                                   )
-                                ],
-                              ),
-                            )
-                          : Container(),
-                      Container(
-                        child: Row(
-                          children: [
+                                : Container(),
                             Container(
-                              alignment: Alignment.topLeft,
-                              decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.3),
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(30))),
                               child: Row(
                                 children: [
                                   Container(
-                                    child: SvgPicture.asset(
-                                      contentTypeImage(contentList![index]
-                                          .contentType!
-                                          .toLowerCase()),
-                                      semanticsLabel: 'Acme Logo',
-                                      width: 22,
-                                      height: 22,
-                                      fit: BoxFit.fitWidth,
+                                    alignment: Alignment.topLeft,
+                                    decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.3),
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(30))),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          child: SvgPicture.asset(
+                                            contentTypeImage(contentList![index]
+                                                .contentType!
+                                                .toLowerCase()),
+                                            semanticsLabel: 'Acme Logo',
+                                            width: 22,
+                                            height: 22,
+                                            fit: BoxFit.fitWidth,
+                                          ),
+                                        ),
+                                        Container(
+                                          child: Text(
+                                            getContentType(contentList![index]
+                                                .contentType!),
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontFamily: "Causten-Regular"),
+                                          ),
+                                          margin: EdgeInsets.only(
+                                              left: 10, right: 10),
+                                        ),
+                                      ],
                                     ),
+                                    margin: EdgeInsets.only(top: 0, left: 0),
+                                    padding: EdgeInsets.only(
+                                        left: 15, right: 15, top: 8, bottom: 8),
                                   ),
                                   Container(
                                     child: Text(
-                                      getContentType(
-                                          contentList![index].contentType!),
+                                      contentList![index]!.contentDuration! +
+                                          " min",
                                       style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
+                                          fontSize: 14,
+                                          color: Color(0xFFFFFFFF),
                                           fontFamily: "Causten-Regular"),
                                     ),
-                                    margin:
-                                        EdgeInsets.only(left: 10, right: 10),
-                                  ),
+                                    margin: EdgeInsets.only(left: 10),
+                                  )
                                 ],
                               ),
-                              margin: EdgeInsets.only(top: 0, left: 0),
-                              padding: EdgeInsets.only(
-                                  left: 15, right: 15, top: 8, bottom: 8),
-                            ),
-                            Container(
-                              child: Text(
-                                contentList![index]!.contentDuration! + " min",
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFFFFFFFF),
-                                    fontFamily: "Causten-Regular"),
-                              ),
-                              margin: EdgeInsets.only(left: 10),
+                              margin: EdgeInsets.only(top: 5),
                             )
                           ],
-                        ),
-                        margin: EdgeInsets.only(top: 5),
-                      )
-                    ],
-                  )),
-                  !((contentList![index].contentType == "GAME") ||
-                          (contentList![index].contentType == "JOURNAL") ||
-                          (contentList![index].contentType == "EMI") ||
-                          (contentList![index].contentType == "INFO_TIDBITS") ||
-                          (contentList![index].contentType ==
-                              "INFO_TIDBITS_OCD") ||
-                          (contentList![index].contentType ==
-                              "INFO_TIDBITS_GENERAL") ||
-                          (contentList![index].contentType == "ASSESSMENT")|| (contentList![index].contentType == "FEEDBACK"))
-                      ? GestureDetector(
-                          child: Container(
-                            child: SvgPicture.asset(
-                                isPlay
-                                    ? "assets/images/pause.svg"
-                                    : "assets/images/play.svg",
-                                semanticsLabel: 'Acme Logo'),
-                            margin: EdgeInsets.only(left: 0),
-                          ),
-                          onTap: () {
-                            isPlay = !isPlay;
-                            setState(() {});
-                          },
-                        )
-                      : Container()
-                ],
-              ),
-            ),
+                        )),
+                        !((contentList![index].contentType == "GAME") ||
+                                (contentList![index].contentType ==
+                                    "JOURNAL") ||
+                                (contentList![index].contentType == "EMI") ||
+                                (contentList![index].contentType ==
+                                    "INFO_TIDBITS") ||
+                                (contentList![index].contentType ==
+                                    "INFO_TIDBITS_OCD") ||
+                                (contentList![index].contentType ==
+                                    "INFO_TIDBITS_GENERAL") ||
+                                (contentList![index].contentType ==
+                                    "ASSESSMENT") ||
+                                (contentList![index].contentType == "FEEDBACK"))
+                            ? GestureDetector(
+                                child: Container(
+                                  child: SvgPicture.asset(
+                                      isPlay
+                                          ? "assets/images/pause.svg"
+                                          : "assets/images/play.svg",
+                                      semanticsLabel: 'Acme Logo'),
+                                  margin: EdgeInsets.only(left: 0),
+                                ),
+                                onTap: () {
+                                  isPlay = !isPlay;
+                                  setState(() {});
+                                },
+                              )
+                            : Container()
+                      ],
+                    ),
+                  ),
           ],
         ),
         margin: EdgeInsets.only(left: 15, right: 15, bottom: 0),
@@ -1190,53 +1256,70 @@ RemoteConfigService? remoteConfigService;
               ),
             ),
           ))
-        : isShowTapAnim?Container(child: Container(
-      child: Container(
-        color: Colors.black.withOpacity(0.8),
-        child: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Lottie.asset("assets/images/tap_anim.json",
-                  repeat: true, height: 80),
-              Container(
-                  child: Text(
-                    "Tap on the screen",
-                    style: TextStyle(
-                        fontFamily: "Causten-Medium",
-                        fontSize: 16,
-                        color: Colors.white),
-                    textAlign: TextAlign.center,
-                  )),
-              Container(
-                child: Text("To enter your experience",
-                    style: TextStyle(
-                        fontFamily: "Causten-Regular",
-                        fontSize: 14,
-                        color: Colors.white),
-                    textAlign: TextAlign.center),
-                margin: EdgeInsets.only(top: 5),
-              ),
-              InkWell(child: Container(margin: EdgeInsets.only(top: 25),decoration: BoxDecoration(color: Colors.white,
-                border: Border.all(
-                    width: 1.0,color: Colors.white
+        : isShowTapAnim
+            ? Container(
+                child: Container(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.8),
+                    child: Center(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Lottie.asset("assets/images/tap_anim.json",
+                              repeat: true, height: 80),
+                          Container(
+                              child: Text(
+                            "Tap on the screen",
+                            style: TextStyle(
+                                fontFamily: "Causten-Medium",
+                                fontSize: 16,
+                                color: Colors.white),
+                            textAlign: TextAlign.center,
+                          )),
+                          Container(
+                            child: Text("To enter your experience",
+                                style: TextStyle(
+                                    fontFamily: "Causten-Regular",
+                                    fontSize: 14,
+                                    color: Colors.white),
+                                textAlign: TextAlign.center),
+                            margin: EdgeInsets.only(top: 5),
+                          ),
+                          InkWell(
+                            child: Container(
+                              margin: EdgeInsets.only(top: 25),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border:
+                                    Border.all(width: 1.0, color: Colors.white),
+                                borderRadius: BorderRadius.all(Radius.circular(
+                                        20.0) //                 <--- border radius here
+                                    ),
+                              ),
+                              padding: EdgeInsets.only(
+                                  left: 15, right: 15, top: 8, bottom: 8),
+                              child: Text(
+                                "Got it",
+                                style: TextStyle(
+                                    color: Color(0xFF2E292C),
+                                    fontSize: 14,
+                                    fontFamily: "Causten-Bold"),
+                              ),
+                            ),
+                            onTap: () {
+                              PreferenceUtils.setBool("isTapAnim", true);
+                              isShowTapAnim = false;
+                              setState(() {});
+                            },
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                borderRadius: BorderRadius.all(
-                    Radius.circular(20.0) //                 <--- border radius here
-                ),
-              ),padding:EdgeInsets.only(left: 15,right: 15,top: 8,bottom: 8),child: Text("Got it",style: TextStyle(color: Color(0xFF2E292C),fontSize: 14,fontFamily: "Causten-Bold"),),),onTap: (){
-                PreferenceUtils.setBool("isTapAnim", true);
-                isShowTapAnim=false;
-                setState(() {
-
-                });
-              },)
-            ],
-          ),
-        ),
-      ),
-    ),):Container();
+              )
+            : Container();
   }
 
   Widget buildLeftSearchBar() {
@@ -1318,8 +1401,6 @@ RemoteConfigService? remoteConfigService;
                   EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
             ),
             onTap: () {
-
-
               isLoading = 0;
               selectedPositive = 0;
               textEditingController.text = "";
@@ -1342,9 +1423,25 @@ RemoteConfigService? remoteConfigService;
               _showEmotionModal();
             },
           ),
-          InkWell(child: Container(padding: EdgeInsets.only(left: 15,right: 15,bottom: 6,top: 6),margin: EdgeInsets.only(right: 15,top: 5),child: Text("Give feedback",style: TextStyle(fontFamily: "Causten-Medium",color: Colors.white,fontSize: 14),),decoration: BoxDecoration(border: Border.all(color: Color(0xffECECEC),width: 1),borderRadius: BorderRadius.circular(30)),),onTap: (){
-            showOpenFeedback(false);
-          },)
+          InkWell(
+            child: Container(
+              padding: EdgeInsets.only(left: 15, right: 15, bottom: 6, top: 6),
+              margin: EdgeInsets.only(right: 15, top: 5),
+              child: Text(
+                "Give feedback",
+                style: TextStyle(
+                    fontFamily: "Causten-Medium",
+                    color: Colors.white,
+                    fontSize: 14),
+              ),
+              decoration: BoxDecoration(
+                  border: Border.all(color: Color(0xffECECEC), width: 1),
+                  borderRadius: BorderRadius.circular(30)),
+            ),
+            onTap: () {
+              showOpenFeedback(false);
+            },
+          )
         ],
       ),
     );
@@ -1447,14 +1544,14 @@ RemoteConfigService? remoteConfigService;
               "collectionID", collectionList[0].collectionId!);
           PreferenceUtils.setString(
               "collectionName", collectionList[0].collectionName!);
-        }else{
-         CollectionObject collectionObject= collectionList
+        } else {
+          CollectionObject collectionObject = collectionList
               .where((element) =>
-          element.collectionId ==
-              PreferenceUtils.getString("collectionID", ""))
+                  element.collectionId ==
+                  PreferenceUtils.getString("collectionID", ""))
               .toList()[0];
-         PreferenceUtils.setString(
-             "collectionName", collectionObject.collectionName!);
+          PreferenceUtils.setString(
+              "collectionName", collectionObject.collectionName!);
         }
       }
       // setState(() {});
@@ -1623,7 +1720,7 @@ RemoteConfigService? remoteConfigService;
   void getContentList(String id, ctx) async {
     print(currentPage);
     print("getContentList");
-    if(moodId!=id){
+    if (moodId != id) {
       userTrackingHelper!.sendUserTrackingRequest();
     }
     PreferenceUtils.setBool("is_surprise", isSurpriseMe);
@@ -1665,7 +1762,8 @@ RemoteConfigService? remoteConfigService;
 
         currentPage++; // Prepare for next page request
         if (contentList!.length <= 10 && _pageController!.hasClients) {
-          userTrackingHelper!.saveUserEntries("feed_entry",contentList![0].contentId!);
+          userTrackingHelper!
+              .saveUserEntries("feed_entry", contentList![0].contentId!);
           if (isClosedBottomSheet) {
             isPlay = true;
           } else {
@@ -1683,7 +1781,8 @@ RemoteConfigService? remoteConfigService;
           preloadImages.init(contentList);
         } else {
           if (contentList!.length <= 10) {
-            userTrackingHelper!.saveUserEntries("feed_entry",contentList![0].contentId!);
+            userTrackingHelper!
+                .saveUserEntries("feed_entry", contentList![0].contentId!);
             print("isClosedBottomSheet");
             print(isClosedBottomSheet);
             if (isClosedBottomSheet) {
@@ -1993,159 +2092,136 @@ RemoteConfigService? remoteConfigService;
                                       },
                                       popupDirection: TooltipDirection.up,
                                       showBarrier: true,
-                                      child: InkWell(
-                                        child: Container(
-                                          child: Row(
-                                            children: [
-                                              Text(
-                                                isPositiveEmotion
-                                                    ? "I want to feel"
-                                                    : "I feel",
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                    fontSize: 24,
-                                                    fontFamily:
-                                                        "Causten-Regular",
-                                                    color: showToolTip == 1 ||
-                                                            showToolTip == 3
-                                                        ? Color(0xF8F7F8)
-                                                            .withOpacity(0.2)
-                                                        : Colors.white),
-                                              ),
-                                              Container(
-                                                  child: SvgPicture.asset(
-                                                      isOpenFeelDialog
-                                                          ? "assets/images/caretUp.svg"
-                                                          : "assets/images/cartDown.svg"),
-                                                  margin:
-                                                      EdgeInsets.only(left: 3))
-                                            ],
+                                      child: MenuAnchor(
+                                        alignmentOffset: Offset(0, 0),
+                                        style: MenuStyle(
+                                          backgroundColor:
+                                              MaterialStateProperty.all(
+                                                  Color(0xFF1A1A1A)),
+                                          shape: MaterialStateProperty.all(
+                                            RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(24),
+                                            ),
                                           ),
-                                          alignment: Alignment.center,
-                                          margin: EdgeInsets.only(top: 10),
                                         ),
-                                        onTap: () {
+                                        controller: _iFeelMenuController,
+                                        onOpen: () {
                                           isOpenFeelDialog = true;
                                           setState(() {});
-                                          showModalBottomSheet(
-                                            context: context,
-                                            backgroundColor: Colors.transparent,
-                                            builder: (BuildContext context) {
-                                              return Column(
-                                                mainAxisSize: MainAxisSize.min,
+                                        },
+                                        menuChildren: [
+                                          MenuItemButton(
+                                            onPressed: () {
+                                              isPositiveEmotion = false;
+                                              onIfeelMenuButtonPressed();
+                                              setState(() {});
+                                            },
+                                            style: ButtonStyle(
+                                              backgroundColor:
+                                                  MaterialStateProperty
+                                                      .resolveWith<Color?>(
+                                                          (states) {
+                                                if (states.contains(
+                                                    MaterialState.pressed)) {
+                                                  return Color(
+                                                      0xFF272727); // Background when pressed
+                                                }
+                                                return null; // Default background
+                                              }),
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16),
+                                              child: Text(
+                                                'I feel',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontFamily: 'Causten-Medium',
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w400,
+                                                  height: 20 / 14,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          MenuItemButton(
+                                            onPressed: () {
+                                              isPositiveEmotion = true;
+                                              onIfeelMenuButtonPressed();
+                                              setState(() {});
+                                            },
+                                            style: ButtonStyle(
+                                              backgroundColor:
+                                                  MaterialStateProperty
+                                                      .resolveWith<Color?>(
+                                                          (states) {
+                                                if (states.contains(
+                                                    MaterialState.pressed)) {
+                                                  return Color(
+                                                      0xFF272727); // Background when pressed
+                                                }
+                                                return null; // Default background
+                                              }),
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16),
+                                              child: Text(
+                                                'I want to feel',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontFamily: 'Causten-Medium',
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w400,
+                                                  height: 20 / 14,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        builder: (context, controller, child) {
+                                          return InkWell(
+                                            child: Container(
+                                              child: Row(
                                                 children: [
-                                                  Container(
-                                                    margin: EdgeInsets.only(
-                                                        left: 10, right: 10),
-                                                    decoration: BoxDecoration(
-                                                      color:
-                                                          Colors.grey.shade400,
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(20),
-                                                        topRight:
-                                                            Radius.circular(20),
-                                                        bottomRight:
-                                                            Radius.circular(20),
-                                                        bottomLeft:
-                                                            Radius.circular(20),
-                                                      ),
-                                                    ),
-                                                    child: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        _buildBottomSheetOption(
-                                                            context, "I feel",
-                                                            onTap: () {
-                                                          isPositiveEmotion =
-                                                              false;
-                                                          Navigator.of(context)
-                                                              .pop();
-                                                          // Handle "I feel" option
-                                                        }),
-                                                        Divider(
-                                                          height: 1,
-                                                          color: Color(
-                                                              0xff3C3C435C),
-                                                        ),
-                                                        _buildBottomSheetOption(
-                                                            context,
-                                                            "I want to feel",
-                                                            onTap: () {
-                                                          isPositiveEmotion =
-                                                              true;
-                                                          Navigator.of(context)
-                                                              .pop();
-                                                          // Handle "I want to feel" option
-                                                        }),
-                                                      ],
-                                                    ),
+                                                  Text(
+                                                    isPositiveEmotion
+                                                        ? "I want to feel"
+                                                        : "I feel",
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                        fontSize: 24,
+                                                        fontFamily:
+                                                            "Causten-Regular",
+                                                        color: showToolTip ==
+                                                                    1 ||
+                                                                showToolTip == 3
+                                                            ? Color(0xF8F7F8)
+                                                                .withOpacity(
+                                                                    0.2)
+                                                            : Colors.white),
                                                   ),
                                                   Container(
-                                                    margin: EdgeInsets.only(
-                                                        top: 10,
-                                                        left: 10,
-                                                        right: 10),
-                                                    decoration: BoxDecoration(
-                                                      color:
-                                                          Colors.grey.shade400,
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(20),
-                                                        topRight:
-                                                            Radius.circular(20),
-                                                        bottomRight:
-                                                            Radius.circular(20),
-                                                        bottomLeft:
-                                                            Radius.circular(20),
-                                                      ),
-                                                    ),
-                                                    child: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        _buildBottomSheetOption(
-                                                            context, "Cancel",
-                                                            onTap: () {
-                                                          Navigator.of(context)
-                                                              .pop();
-                                                        }),
-                                                      ],
-                                                    ),
-                                                  )
+                                                      child: SvgPicture.asset(
+                                                          isOpenFeelDialog
+                                                              ? "assets/images/caretUp.svg"
+                                                              : "assets/images/cartDown.svg"),
+                                                      margin: EdgeInsets.only(
+                                                          left: 3))
                                                 ],
-                                              );
+                                              ),
+                                              alignment: Alignment.center,
+                                              margin: EdgeInsets.only(top: 10),
+                                            ),
+                                            onTap: () {
+                                              controller.open();
                                             },
-                                          ).then((value) => {
-                                                isOpenFeelDialog = false,
-                                                moods = [],
-                                                moods2 = [],
-                                                if (isPositiveEmotion)
-                                                  {
-                                                    if (positiveMoods != null &&
-                                                        positiveMoods!
-                                                            .isNotEmpty)
-                                                      {
-                                                        moods!.addAll(
-                                                            positiveMoods!),
-                                                        moods2!.addAll(
-                                                            positiveMoods2!)
-                                                      }
-                                                  }
-                                                else
-                                                  {
-                                                    if (dMoods != null &&
-                                                        dMoods!.isNotEmpty)
-                                                      {
-                                                        moods!.addAll(dMoods!),
-                                                        moods2!.addAll(dMoods2!)
-                                                      }
-                                                  },
-                                                setState(() {})
-                                              });
+                                          );
                                         },
                                       ),
                                       content: Container(
@@ -2232,79 +2308,118 @@ RemoteConfigService? remoteConfigService;
                                         ),
                                       ),
                                     ),
-                                    Container(
-                                      margin:
-                                          EdgeInsets.only(left: 5, bottom: 0),
-                                      width: isPositiveEmotion ? 155 : 180,
-                                      child: ConstrainedBox(
-                                        constraints:
-                                            BoxConstraints(minWidth: 30),
-                                        child: IntrinsicWidth(
-                                          child: TextField(
-                                            controller: textEditingController,
-                                            onChanged: (text) {
-                                              text = text.trim();
-                                              if (text.length >= 3) {
-                                                Future.delayed(
-                                                    Duration(milliseconds: 500),
-                                                    () async {
-                                                  loadDefaultMoods();
-                                                  isLoading = 1;
-                                                  setState(() {});
-                                                  //LoadingUtils.instance.showLoadingIndicator("Receiving...", context);
-                                                  ApiResponse apiResponse =
-                                                      await apiHelper
-                                                          .getPromptNames(text,
-                                                              isPositiveEmotion);
-                                                  isLoading = 0;
-                                                  setState(() {});
-                                                  // LoadingUtils.instance.hideOpenDialog(context);
-                                                  print("apiResponse.status");
-                                                  print(apiResponse.status);
-                                                  if (apiResponse.status ==
-                                                      Status.COMPLETED) {
-                                                    ResponseModel
-                                                        responseModel =
-                                                        ResponseModel.fromJson(
-                                                            apiResponse.data,
-                                                            text);
-                                                    print(responseModel.status);
-                                                    if (responseModel.status ==
-                                                        200) {
-                                                      if (responseModel.moods != null &&
-                                                          responseModel.moods !=
-                                                              null &&
-                                                          responseModel.moods!
-                                                              .isNotEmpty) {
-                                                        isFullEmotion =
+                                    Expanded(
+                                      child: Container(
+                                        margin:
+                                            EdgeInsets.only(left: 5, bottom: 0),
+                                        width: isPositiveEmotion ? 155 : 180,
+                                        child: ConstrainedBox(
+                                          constraints:
+                                              BoxConstraints(minWidth: 30),
+                                          child: IntrinsicWidth(
+                                            child: TextField(
+                                              controller: textEditingController,
+                                              onChanged: (text) {
+                                                text = text.trim();
+                                                if (text.length >= 3) {
+                                                  Future.delayed(
+                                                      Duration(
+                                                          milliseconds: 500),
+                                                      () async {
+                                                    loadDefaultMoods();
+                                                    isLoading = 1;
+                                                    setState(() {});
+                                                    //LoadingUtils.instance.showLoadingIndicator("Receiving...", context);
+                                                    ApiResponse apiResponse =
+                                                        await apiHelper
+                                                            .getPromptNames(
+                                                                text,
+                                                                isPositiveEmotion);
+                                                    isLoading = 0;
+                                                    setState(() {});
+                                                    // LoadingUtils.instance.hideOpenDialog(context);
+                                                    print("apiResponse.status");
+                                                    print(apiResponse.status);
+                                                    if (apiResponse.status ==
+                                                        Status.COMPLETED) {
+                                                      ResponseModel
+                                                          responseModel =
+                                                          ResponseModel
+                                                              .fromJson(
+                                                                  apiResponse
+                                                                      .data,
+                                                                  text);
+                                                      print(
+                                                          responseModel.status);
+                                                      if (responseModel
+                                                              .status ==
+                                                          200) {
+                                                        if (responseModel.moods != null &&
                                                             responseModel
-                                                                .isShow;
-                                                        List<Mood> cluster =
-                                                            responseModel
-                                                                .moods!;
-                                                        moods = [];
-                                                        moods2 = [];
-                                                        isLoading = 2;
-                                                        print("moods.length");
-                                                        print(isLoading);
-
-                                                        print(cluster!.length);
-                                                        for (int i = 0;
-                                                            i < cluster!.length;
-                                                            i++) {
-                                                          if (i % 2 == 0) {
-                                                            moods!.add(
-                                                                cluster![i]);
-                                                          } else {
-                                                            moods2!.add(
-                                                                cluster![i]);
-                                                          }
-                                                        }
-                                                        if (textEditingController
-                                                                .text.length <
-                                                            3) {
+                                                                    .moods !=
+                                                                null &&
+                                                            responseModel.moods!
+                                                                .isNotEmpty) {
+                                                          isFullEmotion =
+                                                              responseModel
+                                                                  .isShow;
+                                                          List<Mood> cluster =
+                                                              responseModel
+                                                                  .moods!;
                                                           moods = [];
                                                           moods2 = [];
+                                                          isLoading = 2;
+                                                          print("moods.length");
+                                                          print(isLoading);
+
+                                                          print(
+                                                              cluster!.length);
+                                                          for (int i = 0;
+                                                              i <
+                                                                  cluster!
+                                                                      .length;
+                                                              i++) {
+                                                            if (i % 2 == 0) {
+                                                              moods!.add(
+                                                                  cluster![i]);
+                                                            } else {
+                                                              moods2!.add(
+                                                                  cluster![i]);
+                                                            }
+                                                          }
+                                                          if (textEditingController
+                                                                  .text.length <
+                                                              3) {
+                                                            moods = [];
+                                                            moods2 = [];
+                                                            if (isPositiveEmotion) {
+                                                              if (positiveMoods !=
+                                                                      null &&
+                                                                  positiveMoods!
+                                                                      .isNotEmpty) {
+                                                                moods!.addAll(
+                                                                    positiveMoods!);
+                                                                moods2!.addAll(
+                                                                    positiveMoods2!);
+                                                              }
+                                                            } else {
+                                                              if (dMoods !=
+                                                                      null &&
+                                                                  dMoods!
+                                                                      .isNotEmpty) {
+                                                                moods!.addAll(
+                                                                    dMoods!);
+                                                                moods2!.addAll(
+                                                                    dMoods2!);
+                                                              }
+                                                            }
+                                                          }
+                                                          setState(() {});
+                                                        } else {
+                                                          isLoading = 3;
+                                                          moods = [];
+                                                          moods2 = [];
+                                                          print("no result");
                                                           if (isPositiveEmotion) {
                                                             if (positiveMoods !=
                                                                     null &&
@@ -2326,13 +2441,23 @@ RemoteConfigService? remoteConfigService;
                                                                   dMoods2!);
                                                             }
                                                           }
+                                                          if (textEditingController
+                                                                  .text.length <
+                                                              3) {
+                                                            isLoading = 2;
+                                                          }
+                                                          setState(() {});
                                                         }
-                                                        setState(() {});
                                                       } else {
                                                         isLoading = 3;
                                                         moods = [];
                                                         moods2 = [];
-                                                        print("no result");
+                                                        if (textEditingController
+                                                                .text.length <
+                                                            3) {
+                                                          isLoading = 2;
+                                                        }
+
                                                         if (isPositiveEmotion) {
                                                           if (positiveMoods !=
                                                                   null &&
@@ -2353,22 +2478,18 @@ RemoteConfigService? remoteConfigService;
                                                                 dMoods2!);
                                                           }
                                                         }
-                                                        if (textEditingController
-                                                                .text.length <
-                                                            3) {
-                                                          isLoading = 2;
-                                                        }
                                                         setState(() {});
                                                       }
                                                     } else {
                                                       isLoading = 3;
+                                                      setState(() {});
+                                                      Utility.showSnackBar(
+                                                          context: context,
+                                                          message: apiResponse
+                                                              .message
+                                                              .toString());
                                                       moods = [];
                                                       moods2 = [];
-                                                      if (textEditingController
-                                                              .text.length <
-                                                          3) {
-                                                        isLoading = 2;
-                                                      }
 
                                                       if (isPositiveEmotion) {
                                                         if (positiveMoods !=
@@ -2392,98 +2513,71 @@ RemoteConfigService? remoteConfigService;
                                                       }
                                                       setState(() {});
                                                     }
-                                                  } else {
-                                                    isLoading = 3;
-                                                    setState(() {});
-                                                    Utility.showSnackBar(
-                                                        context: context,
-                                                        message: apiResponse
-                                                            .message
-                                                            .toString());
-                                                    moods = [];
-                                                    moods2 = [];
-
-                                                    if (isPositiveEmotion) {
-                                                      if (positiveMoods !=
-                                                              null &&
-                                                          positiveMoods!
-                                                              .isNotEmpty) {
-                                                        moods!.addAll(
-                                                            positiveMoods!);
-                                                        moods2!.addAll(
-                                                            positiveMoods2!);
-                                                      }
-                                                    } else {
-                                                      if (dMoods != null &&
-                                                          dMoods!.isNotEmpty) {
-                                                        moods!.addAll(dMoods!);
-                                                        moods2!
-                                                            .addAll(dMoods2!);
-                                                      }
-                                                    }
-                                                    setState(() {});
-                                                  }
-                                                });
-                                              } else {
-                                                isLoading = 2;
-                                                moods = [];
-                                                moods2 = [];
-
-                                                if (isPositiveEmotion) {
-                                                  if (positiveMoods != null &&
-                                                      positiveMoods!
-                                                          .isNotEmpty) {
-                                                    moods!
-                                                        .addAll(positiveMoods!);
-                                                    moods2!.addAll(
-                                                        positiveMoods2!);
-                                                  }
+                                                  });
                                                 } else {
-                                                  if (dMoods != null &&
-                                                      dMoods!.isNotEmpty) {
-                                                    moods!.addAll(dMoods!);
-                                                    moods2!.addAll(dMoods2!);
+                                                  isLoading = 2;
+                                                  moods = [];
+                                                  moods2 = [];
+
+                                                  if (isPositiveEmotion) {
+                                                    if (positiveMoods != null &&
+                                                        positiveMoods!
+                                                            .isNotEmpty) {
+                                                      moods!.addAll(
+                                                          positiveMoods!);
+                                                      moods2!.addAll(
+                                                          positiveMoods2!);
+                                                    }
+                                                  } else {
+                                                    if (dMoods != null &&
+                                                        dMoods!.isNotEmpty) {
+                                                      moods!.addAll(dMoods!);
+                                                      moods2!.addAll(dMoods2!);
+                                                    }
                                                   }
+                                                  setState(() {});
                                                 }
-                                                setState(() {});
-                                              }
-                                            },
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                decorationThickness: 0,
-                                                color: Color(0xF8F7F8)
-                                                    .withOpacity(0.9),
-                                                decoration: TextDecoration.none,
-                                                fontSize: 24,
-                                                fontFamily: "Causten-Regular"),
-                                            cursorColor: Colors.white,
-                                            enabled: !isContentListApiRunning,
-                                            showCursor: true,
-                                            autofocus: isShownTip,
-                                            focusNode: _focusNode,
-                                            decoration: InputDecoration(
-                                                border: InputBorder.none,
-                                                enabledBorder:
-                                                    UnderlineInputBorder(
-                                                  borderSide: BorderSide(
+                                              },
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                  decorationThickness: 0,
+                                                  color: Color(0xF8F7F8)
+                                                      .withOpacity(0.9),
+                                                  decoration:
+                                                      TextDecoration.none,
+                                                  fontSize: 24,
+                                                  fontFamily:
+                                                      "Causten-Regular"),
+                                              cursorColor: Colors.white,
+                                              enabled: !isContentListApiRunning,
+                                              showCursor: true,
+                                              autofocus: isShownTip,
+                                              focusNode: _focusNode,
+                                              decoration: InputDecoration(
+                                                  border: InputBorder.none,
+                                                  enabledBorder:
+                                                      UnderlineInputBorder(
+                                                    borderSide: BorderSide(
+                                                        color: Colors.white
+                                                            .withOpacity(0.4)),
+                                                  ),
+                                                  focusedBorder:
+                                                      UnderlineInputBorder(
+                                                    borderSide: BorderSide(
+                                                        color: Colors.white
+                                                            .withOpacity(0.4)),
+                                                  ),
+                                                  contentPadding:
+                                                      EdgeInsets.only(
+                                                          bottom: 6),
+                                                  hintStyle: TextStyle(
+                                                      fontSize: 24,
                                                       color: Colors.white
-                                                          .withOpacity(0.4)),
-                                                ),
-                                                focusedBorder:
-                                                    UnderlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Colors.white
-                                                          .withOpacity(0.4)),
-                                                ),
-                                                contentPadding:
-                                                    EdgeInsets.only(bottom: 6),
-                                                hintStyle: TextStyle(
-                                                    fontSize: 24,
-                                                    color: Colors.white
-                                                        .withOpacity(0.4),
-                                                    fontFamily:
-                                                        "Causten-Regular"),
-                                                hintText: ""),
+                                                          .withOpacity(0.4),
+                                                      fontFamily:
+                                                          "Causten-Regular"),
+                                                  hintText: ""),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -2964,19 +3058,26 @@ RemoteConfigService? remoteConfigService;
                           ),
                         ),
                         isContentListApiRunning
-                            ? Positioned(top: 0,bottom: 0,left: 0,right: 0,
+                            ? Positioned(
+                                top: 0,
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
                                 child: Container(
                                   height: 100,
                                   width: 100,
                                   margin: EdgeInsets.all(5),
                                   child: Center(
                                       child: Lottie.asset(
-                                          "assets/images/feed_preloader.json",height: 100,width: 100)
-                                  )/*CircularProgressIndicator(
+                                          "assets/images/feed_preloader.json",
+                                          height: 100,
+                                          width:
+                                              100)) /*CircularProgressIndicator(
                                       strokeWidth: 2.0,
                                       valueColor:
                                           AlwaysStoppedAnimation(Colors.white),
-                                    )*/,
+                                    )*/
+                                  ,
                                 ),
                               )
                             : Container(
@@ -3025,81 +3126,73 @@ RemoteConfigService? remoteConfigService;
         });
   }
 
-  void showOpenFeedback(bool isWeekly){
-    bIsPlay=isPlay;
-    isPlay=false;
+  void showOpenFeedback(bool isWeekly) {
+    bIsPlay = isPlay;
+    isPlay = false;
     pauseAudio();
-    setState(() {
-
-    });
+    setState(() {});
     showModalBottomSheet(
         context: context,
         backgroundColor: Color(0xff131314),
-    isScrollControlled: true,barrierColor: Colors.transparent,
-    isDismissible:false,
-    builder: (BuildContext context) {
-    return Padding(
-        padding: MediaQuery
-            .of(context)
-            .viewInsets,
-        child:OpenFeedBackWidget(isWeekly:isWeekly));
-    }).then((value) => {
-      updateOpenFeedback(value,isWeekly)
-    });
+        isScrollControlled: true,
+        barrierColor: Colors.transparent,
+        isDismissible: false,
+        builder: (BuildContext context) {
+          return Padding(
+              padding: MediaQuery.of(context).viewInsets,
+              child: OpenFeedBackWidget(isWeekly: isWeekly));
+        }).then((value) => {updateOpenFeedback(value, isWeekly)});
   }
-  void updateOpenFeedback(value,bool isWeekly){
+
+  void updateOpenFeedback(value, bool isWeekly) {
     print("updateOpenFeedback");
     print(value);
-    if(value!=value["success"]){
+    if (value != value["success"]) {
       showFeedbackSuccessDialog(isWeekly);
-    }else{
-      if(!isWeekly){
-        if(bIsPlay){
-          isPlay=true;
-          bIsPlay=false;
+    } else {
+      if (!isWeekly) {
+        if (bIsPlay) {
+          isPlay = true;
+          bIsPlay = false;
           playAudio();
-          setState(() {
-          });
+          setState(() {});
         }
       }
-
     }
   }
-  void showFeedbackSuccessDialog(bool isWeekly){
+
+  void showFeedbackSuccessDialog(bool isWeekly) {
     showDialog(
         context: context,
         builder: (context) {
-          return Dialog(backgroundColor: Color(0xff1A1A1A),
+          return Dialog(
+            backgroundColor: Color(0xff1A1A1A),
             child: FeedBackDialog(),
           );
         }).then((value) => {
-          if(!isWeekly){
-            if(bIsPlay){
-              isPlay=true,
-              bIsPlay=false,
-              playAudio(),
-              setState(() {
-              })
+          if (!isWeekly)
+            {
+              if (bIsPlay)
+                {isPlay = true, bIsPlay = false, playAudio(), setState(() {})}
             }
-          }
-
-    });
+        });
   }
-  void showVersionUpdateDialog(){
-    bIsPlay=isPlay;
-    isPlay=false;
-    pauseAudio();
-    setState(() {
 
-    });
+  void showVersionUpdateDialog() {
+    bIsPlay = isPlay;
+    isPlay = false;
+    pauseAudio();
+    setState(() {});
     showDialog(
         context: context,
         builder: (context) {
-          return Dialog(backgroundColor: Color(0xff1A1A1A),
+          return Dialog(
+            backgroundColor: Color(0xff1A1A1A),
             child: VersionUpdateDialog(),
           );
         });
   }
+
   void getPositiveDefaultMoods() async {
     ApiResponse apiResponse = await apiHelper.getPromptNames("", true);
     if (apiResponse.status == Status.COMPLETED) {
@@ -3275,7 +3368,8 @@ RemoteConfigService? remoteConfigService;
   String getContentType(String lowerCase) {
     if ((lowerCase.toLowerCase() == "positive_meditation") ||
         (lowerCase.toLowerCase() == "mantra_meditation") ||
-        (lowerCase.toLowerCase() == "negative_meditation")||(lowerCase.toLowerCase() == "mindfulness_meditation")) {
+        (lowerCase.toLowerCase() == "negative_meditation") ||
+        (lowerCase.toLowerCase() == "mindfulness_meditation")) {
       return "MEDITATION";
     } else if ((lowerCase.toLowerCase() == "hypnotic_induction")) {
       return "HYPNOSIS";
@@ -3304,7 +3398,8 @@ RemoteConfigService? remoteConfigService;
         (lowerCase == "mindfulness") ||
         (lowerCase == "positive_meditation") ||
         (lowerCase == "mantra_meditation") ||
-        (lowerCase == "negative_meditation")||(lowerCase=="mindfulness_meditation")) {
+        (lowerCase == "negative_meditation") ||
+        (lowerCase == "mindfulness_meditation")) {
       return "assets/images/meditation.svg";
     } else if (lowerCase == "breath" ||
         lowerCase == "426_breathing" ||
@@ -3347,5 +3442,22 @@ RemoteConfigService? remoteConfigService;
 
   void updateFirebaseToken(String fcm) {
     apiHelper.updateFirebaseToken(fcm);
+  }
+
+  void onIfeelMenuButtonPressed() {
+    isOpenFeelDialog = false;
+    moods = [];
+    moods2 = [];
+    if (isPositiveEmotion) {
+      if (positiveMoods != null && positiveMoods!.isNotEmpty) {
+        moods!.addAll(positiveMoods!);
+        moods2!.addAll(positiveMoods2!);
+      }
+    } else {
+      if (dMoods != null && dMoods!.isNotEmpty) {
+        moods!.addAll(dMoods!);
+        moods2!.addAll(dMoods2!);
+      }
+    }
   }
 }
