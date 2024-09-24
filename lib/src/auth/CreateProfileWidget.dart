@@ -132,6 +132,7 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
                       child:  TextField(
                         controller: mobileNumberCntrl,focusNode: _focusNode,
                         keyboardType: TextInputType.text,textAlign: TextAlign.center,
+                        maxLength: 30,
                         onChanged: (text) {
                           errorMessage="";
                           if (text.isNotEmpty) {
