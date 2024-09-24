@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:event_bus_plus/event_bus_plus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:quilt/src/Utility.dart';
-
+import 'dart:developer' as d;
 class UserResponse {
   String message = "";
   int status = 0;
@@ -289,6 +291,7 @@ class ContentObj {
   String? animations;
   bool? favourite;
   Duration? duration;
+  Duration? totalDuration;
   bool isMute=false;
   int? lastPositon=0;
   bool isFav=false;
@@ -329,7 +332,8 @@ class ContentObj {
 
     }else if(contentType=="ASSESSMENT"){
       print("ASSESSMENT");
-      print(json["content"]["content"]);
+      print(json["content"]["content"].toString());
+
       contentUrl = json["content"]["content"]["text"];
       animations = json["content"]["content"]["imageURL"];
       assessmentList=AssessmentList.fromJson(json["content"]["content"]);

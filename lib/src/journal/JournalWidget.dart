@@ -18,7 +18,7 @@ import '../../main.dart';
 import '../video/AudioPlayerManager.dart';
 import '../video/PreloadVideo.dart';
 import 'JournalListWidget.dart';
-
+bool isJournalMute=false;
 class JournalWidget extends StatefulWidget {
   @override
   JournalWidgetState createState() => JournalWidgetState();
@@ -34,6 +34,7 @@ class JournalWidgetState extends State<JournalWidget>
  // final player = AudioPlayer();
   StreamSubscription<PhoneState>? _phoneStateSubscription;
   bool isResumed = true;
+  bool isMute = false;
   late PreloadVideos preloadVideos;
   AudioPlayerManager audioPlayerManager = AudioPlayerManager();
   bool isDestroy=false;
@@ -74,7 +75,7 @@ class JournalWidgetState extends State<JournalWidget>
       print(event);
     });*/
    // player.setReleaseMode(ReleaseMode.loop);
-    audioPlayerManager.setVolume(false);
+    audioPlayerManager.setVolume(isMute);
     audioPlayerManager.withUpdateCallback((duration) => {
       if(audioPlayerManager.getCurrentAction()=="Journal"){
         if (videoPlayerController != null &&
@@ -180,6 +181,8 @@ class JournalWidgetState extends State<JournalWidget>
       isArg = true;
       final args = ModalRoute.of(context)?.settings.arguments as Map;
       contentObj = args["url"];
+      isMute = args["isMute"];
+      isJournalMute =isMute;
       if(args["index"]!=null){
         int index = args["index"];
         preloadVideos.playControllerAtIndex(index);
@@ -450,7 +453,7 @@ class JournalWidgetState extends State<JournalWidget>
                           videoPlayerController?.pause();
                           Navigator.pushNamed(
                                   context, HomeWidgetRoutes.JournalEditorWidget,
-                                  arguments: {"url": contentObj})
+                                  arguments: {"url": contentObj,"isMute":isMute})
                               .then((value) => {replayVideo(value)});
                         },
                         style: ElevatedButton.styleFrom(
@@ -515,8 +518,9 @@ class JournalWidgetState extends State<JournalWidget>
       backgroundColor: Colors.white,
       builder: (context) => FractionallySizedBox(
         heightFactor: 0.95,
+
         child: JournalListWidget(
-          contentObj: contentObj,
+          contentObj: contentObj
         ),
       ),
     ).then((value) => {

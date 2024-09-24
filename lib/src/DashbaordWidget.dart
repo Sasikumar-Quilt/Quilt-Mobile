@@ -12,14 +12,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
 import 'package:is_lock_screen2/is_lock_screen2.dart';
 import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
 import 'package:quilt/src/PrefUtils.dart';
 import 'package:quilt/src/PushNotificationService.dart';
+import 'package:quilt/src/base/AppEnvironment.dart';
 import 'package:quilt/src/base/BaseState.dart';
 import 'package:quilt/src/dialog/FeedbackDialog.dart';
+import 'package:quilt/src/favorite/CollectionHelper.dart';
 import 'package:quilt/src/feed/LottieWidget.dart';
 import 'package:quilt/src/feed/TextScrollWidget.dart';
 import 'package:quilt/src/feedback/OpenFeedBackWidget.dart';
@@ -28,8 +31,10 @@ import 'package:quilt/src/tooltip/enums.dart';
 import 'package:quilt/src/tooltip/super_tooltip.dart';
 import 'package:quilt/src/tooltip/super_tooltip_controller.dart';
 import 'package:quilt/src/video/AudioPlayerManager.dart';
+import 'package:quilt/src/video/AudioPlayerWidget.dart';
 import 'package:quilt/src/video/PreloadImages.dart';
 import 'package:quilt/src/video/PreloadVideo.dart';
+import 'package:quilt/src/video/VideoPlayerWidget.dart';
 import 'package:quilt/src/video/VideoWidget.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
@@ -115,7 +120,6 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   bool isFromInitState = false;
   int currentTab = 0;
   List<Widget> webViewList = [];
-  List<CollectionObject> collectionList = [];
   bool isFullEmotion = false;
   late PreloadVideos preloadVideos;
   late PreloadImages preloadImages;
@@ -125,6 +129,11 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   AudioPlayerManager audioManager = AudioPlayerManager();
   RemoteConfigService? remoteConfigService;
   UserTrackingHelper? userTrackingHelper;
+  CollectionHelper? collectionHelper;
+  //double _sliderValue = 0;
+  bool _isSliding = false;
+  final ValueNotifier<double> _sliderValue = ValueNotifier<double>(0);
+
   late MenuController _iFeelMenuController = MenuController();
 
   @override
@@ -147,16 +156,13 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         }
       });
     }
-
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print("onMessageOpenedApp");
-
-      if (message != null) {
+      if(message!=null){
         print(message.data);
         print("object");
         print(message.notification);
-
-        getNotificationIosDetails(message, false);
+        getNotificationIosDetails(message,false);
       }
     });
   }
@@ -265,8 +271,10 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
     }
   }
 
-  void init() {
-    userTrackingHelper = UserTrackingHelper();
+  void init(){
+    collectionHelper= CollectionHelper();
+    collectionHelper!.init();
+    userTrackingHelper=UserTrackingHelper();
     userTrackingHelper!.init();
     userTrackingHelper!.saveUserEntries("app_open", "");
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
@@ -283,7 +291,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
     });
 
     Future.delayed(Duration.zero, () {
-      getCollectionList();
+      //getCollectionList();
       if (!Utility.isEmpty(
           PreferenceUtils.getString(PreferenceUtils.MOODID, ""))) {
         moodName = PreferenceUtils.getString("moodName", "Surprise me");
@@ -293,7 +301,10 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
             PreferenceUtils.getString(PreferenceUtils.MOODID, ""), context);
       }
       getDefaultMoods();
-      checkForAppUpdate();
+      if(AppEnvironment.environment=="Prod"){
+        checkForAppUpdate();
+      }
+
     });
     getFirebaseToken();
     updateContentFav();
@@ -411,9 +422,17 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
     }
     print(contentList![pageCount].duration);
     print(contentList![pageCount].audioURL);
+
     audioManager.setCurrentAction("Feed");
+
     await audioManager.playAudio(contentList![pageCount]!.audioURL!,
         contentList![pageCount]!.duration, true);
+    audioManager.player.getDuration().then(
+          (value) => setState(() {
+            contentList![pageCount].totalDuration = value;
+            print("audioDuration");
+      }),
+    );
     audioManager.setVolume(isMute);
     audioManager.withUpdateCallback((duration) => {
           if (currentRouteName == HomeWidgetRoutes.DashboardWidget ||
@@ -421,7 +440,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
               currentRouteName == null)
             {
               if (audioManager.getCurrentAction() == "Feed")
-                {contentList![pageCount].duration = duration}
+                {contentList![pageCount].duration = duration,_sliderValue.value=duration!.inSeconds.toDouble()}
             }
         });
   }
@@ -452,7 +471,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         currentRouteName == "/" ||
         currentRouteName == null) {
       PreferenceUtils.setBool("isFirstTime", false);
-      getCollectionList();
+      collectionHelper!.getCollectionList();
       if (bIsPlay) {
         isPlay = true;
         playAudio();
@@ -779,7 +798,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
       setState(() {});
       print(contentList![index].contentUrl!);
       Navigator.pushNamed(context, HomeWidgetRoutes.JournalWidget,
-              arguments: {"url": contentList![index], "index": index})
+              arguments: {"url": contentList![index], "index": index,"isMute":isMute})
           .then((value) => {
                 userTrackingHelper!.saveUserEntries(
                     "content_exit", contentList![index].contentId!),
@@ -796,7 +815,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
       setState(() {});
       print(contentList![index].contentUrl!);
       Navigator.pushNamed(context, HomeWidgetRoutes.EmiWidget,
-              arguments: {"url": contentList![index], "index": index})
+              arguments: {"url": contentList![index], "index": index,"isMute":isMute})
           .then((value) => {
                 userTrackingHelper!.saveUserEntries(
                     "content_exit", contentList![index].contentId!),
@@ -940,7 +959,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
             : contentList![index].contentUrl!,
         index: index,
         updatePosition: updateVideoPosition,
-        isMute: isMute,
+        isMute: isMute,updateTotalDuration: updateTotalDuration,
         isPlay: isPlay,
         duration: contentList![index].duration ?? Duration(seconds: 0),
         lastPosition: contentList![index].lastPositon ?? 0,
@@ -971,7 +990,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
+            Container( margin: EdgeInsets.only(left: 15, right: 15, bottom: 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -1033,189 +1052,178 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
               ),
               alignment: Alignment.topRight,
             ),
-            contentList![index].contentType == "FEEDBACK"
-                ? Container()
-                : Container(
-                    margin: EdgeInsets.only(bottom: 20),
-                    child: Row(
-                      children: [
-                        Expanded(
-                            child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              child: TextScrollWidget(
-                                text: contentList![index].contentType ==
-                                        "ASSESSMENT"
-                                    ? contentList![index]
-                                        .assessmentList!
-                                        .assessmentTitle!
-                                    : contentList![index].contentName!,
-                                scrollSpeed: pageCount == index ? 50 : 0,
-                                shouldScroll: true,
-                              ),
-                            ),
-                            contentList![index].hashtags.isNotEmpty
-                                ? Container(
-                                    margin: EdgeInsets.only(top: 5),
-                                    child: SingleChildScrollView(
-                                        child: Row(
-                                          children: getHashTags(
-                                              contentList![index].hashtags),
-                                        ),
-                                        scrollDirection: Axis.horizontal),
-                                  )
-                                : Container(),
-                            contentList![index].contentType == "ASSESSMENT"
-                                ? Container(
-                                    child: Column(
-                                      children: [
-                                        Container(
-                                          margin: EdgeInsets.only(
-                                              bottom: 10, top: 10),
-                                          child: Row(
-                                            children: [
-                                              Container(
-                                                child: SvgPicture.asset(
-                                                    "assets/images/user_ass.svg"),
-                                              ),
-                                              Container(
-                                                margin:
-                                                    EdgeInsets.only(left: 10),
-                                                child: Text(
-                                                  "Take a self-assessment to curate a\n personalized experience within the app",
-                                                  textAlign: TextAlign.start,
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Color(0xffF8F7F8),
-                                                    fontFamily:
-                                                        "Causten-Regular",
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Container(
-                                          margin: EdgeInsets.only(bottom: 10),
-                                          child: Row(
-                                            children: [
-                                              Container(
-                                                child: SvgPicture.asset(
-                                                    "assets/images/target_ass.svg"),
-                                              ),
-                                              Container(
-                                                margin:
-                                                    EdgeInsets.only(left: 10),
-                                                child: Text(
-                                                  "Discover strategies that align with your\n interests and goals",
-                                                  textAlign: TextAlign.start,
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Color(0xffF8F7F8),
-                                                    fontFamily:
-                                                        "Causten-Regular",
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  )
-                                : Container(),
-                            Container(
-                              child: Row(
+            contentList![index].contentType == "FEEDBACK"?Container(): Container(
+              margin: EdgeInsets.only(bottom: 20,left: 15, right: 15),
+              child: Row(
+                children: [
+                  Expanded(
+                      child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        child: TextScrollWidget(
+                          text: contentList![index].contentType == "ASSESSMENT"
+                              ? contentList![index]
+                                  .assessmentList!
+                                  .assessmentTitle!
+                              : contentList![index].contentName!,
+                          scrollSpeed: pageCount == index ? 50 : 0,
+                          shouldScroll: true,
+                        ),
+                      ),
+                      contentList![index].hashtags.isNotEmpty
+                          ? Container(
+                              margin: EdgeInsets.only(top: 5),
+                              child: SingleChildScrollView(
+                                  child: Row(
+                                    children: getHashTags(
+                                        contentList![index].hashtags),
+                                  ),
+                                  scrollDirection: Axis.horizontal),
+                            )
+                          : Container(),
+                      contentList![index].contentType == "ASSESSMENT"
+                          ? Container(
+                              child: Column(
                                 children: [
                                   Container(
-                                    alignment: Alignment.topLeft,
-                                    decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.3),
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(30))),
+                                    margin:
+                                        EdgeInsets.only(bottom: 10, top: 10),
                                     child: Row(
                                       children: [
                                         Container(
                                           child: SvgPicture.asset(
-                                            contentTypeImage(contentList![index]
-                                                .contentType!
-                                                .toLowerCase()),
-                                            semanticsLabel: 'Acme Logo',
-                                            width: 22,
-                                            height: 22,
-                                            fit: BoxFit.fitWidth,
-                                          ),
+                                              "assets/images/user_ass.svg"),
                                         ),
                                         Container(
+                                          margin: EdgeInsets.only(left: 10),
                                           child: Text(
-                                            getContentType(contentList![index]
-                                                .contentType!),
+                                            "Take a self-assessment to curate a\n personalized experience within the app",
+                                            textAlign: TextAlign.start,
                                             style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12,
-                                                fontFamily: "Causten-Regular"),
+                                              fontSize: 14,
+                                              color: Color(0xffF8F7F8),
+                                              fontFamily: "Causten-Regular",
+                                            ),
                                           ),
-                                          margin: EdgeInsets.only(
-                                              left: 10, right: 10),
                                         ),
                                       ],
                                     ),
-                                    margin: EdgeInsets.only(top: 0, left: 0),
-                                    padding: EdgeInsets.only(
-                                        left: 15, right: 15, top: 8, bottom: 8),
                                   ),
                                   Container(
-                                    child: Text(
-                                      contentList![index]!.contentDuration! +
-                                          " min",
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          color: Color(0xFFFFFFFF),
-                                          fontFamily: "Causten-Regular"),
+                                    margin: EdgeInsets.only(bottom: 10),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          child: SvgPicture.asset(
+                                              "assets/images/target_ass.svg"),
+                                        ),
+                                        Container(
+                                          margin: EdgeInsets.only(left: 10),
+                                          child: Text(
+                                            "Discover strategies that align with your\n interests and goals",
+                                            textAlign: TextAlign.start,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Color(0xffF8F7F8),
+                                              fontFamily: "Causten-Regular",
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    margin: EdgeInsets.only(left: 10),
                                   )
                                 ],
                               ),
-                              margin: EdgeInsets.only(top: 5),
+                            )
+                          : Container(),
+                      Container(
+                        child: Row(
+                          children: [
+                            Container(
+                              alignment: Alignment.topLeft,
+                              decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.3),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(30))),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    child: SvgPicture.asset(
+                                      contentTypeImage(contentList![index]
+                                          .contentType!
+                                          .toLowerCase()),
+                                      semanticsLabel: 'Acme Logo',
+                                      width: 22,
+                                      height: 22,
+                                      fit: BoxFit.fitWidth,
+                                    ),
+                                  ),
+                                  Container(
+                                    child: Text(
+                                      getContentType(
+                                          contentList![index].contentType!),
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontFamily: "Causten-Regular"),
+                                    ),
+                                    margin:
+                                        EdgeInsets.only(left: 10, right: 10),
+                                  ),
+                                ],
+                              ),
+                              margin: EdgeInsets.only(top: 0, left: 0),
+                              padding: EdgeInsets.only(
+                                  left: 15, right: 15, top: 8, bottom: 8),
+                            ),
+                            Container(
+                              child: Text(
+                                contentList![index]!.contentDuration! + " min",
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFFFFFFFF),
+                                    fontFamily: "Causten-Regular"),
+                              ),
+                              margin: EdgeInsets.only(left: 10),
                             )
                           ],
-                        )),
-                        !((contentList![index].contentType == "GAME") ||
-                                (contentList![index].contentType ==
-                                    "JOURNAL") ||
-                                (contentList![index].contentType == "EMI") ||
-                                (contentList![index].contentType ==
-                                    "INFO_TIDBITS") ||
-                                (contentList![index].contentType ==
-                                    "INFO_TIDBITS_OCD") ||
-                                (contentList![index].contentType ==
-                                    "INFO_TIDBITS_GENERAL") ||
-                                (contentList![index].contentType ==
-                                    "ASSESSMENT") ||
-                                (contentList![index].contentType == "FEEDBACK"))
-                            ? GestureDetector(
-                                child: Container(
-                                  child: SvgPicture.asset(
-                                      isPlay
-                                          ? "assets/images/pause.svg"
-                                          : "assets/images/play.svg",
-                                      semanticsLabel: 'Acme Logo'),
-                                  margin: EdgeInsets.only(left: 0),
-                                ),
-                                onTap: () {
-                                  isPlay = !isPlay;
-                                  setState(() {});
-                                },
-                              )
-                            : Container()
-                      ],
-                    ),
-                  ),
+                        ),
+                        margin: EdgeInsets.only(top: 5),
+                      )
+                    ],
+                  )),
+                  !((contentList![index].contentType == "GAME") ||
+                          (contentList![index].contentType == "JOURNAL") ||
+                          (contentList![index].contentType == "EMI") ||
+                          (contentList![index].contentType == "INFO_TIDBITS") ||
+                          (contentList![index].contentType ==
+                              "INFO_TIDBITS_OCD") ||
+                          (contentList![index].contentType ==
+                              "INFO_TIDBITS_GENERAL") ||
+                          (contentList![index].contentType == "ASSESSMENT")|| (contentList![index].contentType == "FEEDBACK"))
+                      ? GestureDetector(
+                          child: Container(
+                            child: SvgPicture.asset(
+                                isPlay
+                                    ? "assets/images/pause.svg"
+                                    : "assets/images/play.svg",
+                                semanticsLabel: 'Acme Logo'),
+                            margin: EdgeInsets.only(left: 0),
+                          ),
+                          onTap: () {
+                            isPlay = !isPlay;
+                            setState(() {});
+                          },
+                        )
+                      : Container()
+                ],
+              ),
+            ),
+            contentList![pageCount].totalDuration!=null?_buildControls():Container()
           ],
         ),
-        margin: EdgeInsets.only(left: 15, right: 15, bottom: 0),
+        margin: EdgeInsets.only(left: 0, right: 0, bottom: 0),
       ),
     );
   }
@@ -1516,7 +1524,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
     return listWidgets;
   }
 
-  Future<void> getCollectionList() async {
+  /*Future<void> getCollectionList() async {
     print("collectionApiRequest");
     print(DateTime.timestamp());
     ApiResponse? apiResponse = await apiHelper.getCollections();
@@ -1558,12 +1566,12 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
     } else {
       createCollectionApi("Your Library");
     }
-  }
+  }*/
 
   Future<void> updateFavoriteApi(String id, bool isFav) async {
     ScaffoldMessenger.of(context).removeCurrentSnackBar();
     if (Utility.isEmpty(PreferenceUtils.getString("collectionID", ""))) {
-      getCollectionList();
+      collectionHelper!.getCollectionList();
     } else {
       setState(() {});
       contentList![pageCount].collectionId = !isFav
@@ -1679,13 +1687,12 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
       showSnackbar(PreferenceUtils.getString("collectionName", ""), true);
     }
     if (value["cList"] != null) {
-      collectionList = value["cList"];
+      collectionHelper!.collectionList = value["cList"];
     }
-
     setState(() {});
   }
 
-  Future<void> createCollectionApi(String collectionName) async {
+  /*Future<void> createCollectionApi(String collectionName) async {
     print("createCollectionApi");
     print(DateTime.timestamp());
     ApiResponse? apiResponse =
@@ -1715,7 +1722,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
       }
       collectionList.add(collectionObject.collectionObject!);
     }
-  }
+  }*/
 
   void getContentList(String id, ctx) async {
     print(currentPage);
@@ -3269,7 +3276,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
       builder: (BuildContext context) {
         return Padding(
             padding: MediaQuery.of(context).viewInsets,
-            child: ModalContent(this.collectionList,
+            child: ModalContent(collectionHelper!.collectionList,
                 contentList![pageCount].contentId!, isFav));
       },
     ).then((value) => {updateFavourite(value)});
@@ -3296,7 +3303,84 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
       ),
     );
   }
+  Widget _buildControls() {
+    return Container(
+      padding: EdgeInsets.only(top: 0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Align(
+            child: Container(
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Align(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        thumbShape: RoundSliderThumbShape(
+                            enabledThumbRadius: !_isSliding ? 0 : 10),
+                        overlayShape:
+                        RoundSliderOverlayShape(overlayRadius: 20),
+                        trackHeight: 2,
+                        trackShape: CustomTrackShape(),
+                        thumbColor: Colors.white,
+                        activeTrackColor: Colors.white,
+                        inactiveTrackColor: Colors.white30,
+                        overlayColor: Colors.white.withAlpha(32),
+                      ),
+                      child: ValueListenableBuilder<double>(
+                        builder: (BuildContext context, double value, Widget? child) {
+                          return Slider(
+                            min: 0,
+                            max: contentList![pageCount].totalDuration!.inSeconds.toDouble(),
+                            value: _sliderValue.value,
+                            onChanged: (value) {
+                             /* print("seekChanged");
+                              print(value.toInt());
+                              final position = Duration(seconds: value.toInt());
+                              audioManager!.seek(position);
+                              setState(() {
+                                _sliderValue.value = value;
+                                _isSliding =
+                                true; // Indicate that sliding has started.
+                                print(_isSliding);
 
+                              });*/
+                            },
+                            onChangeEnd: (value) {
+                             /* print("onChangeEnd");
+                              print(value.toInt());
+                              setState(() {
+                                _isSliding =
+                                false; // Indicate that sliding has ended.
+                                print(_isSliding);
+                              });*/
+
+                            },
+                          );
+                        },
+                        valueListenable: _sliderValue,
+                      ),
+                    ),
+                    alignment: Alignment.bottomCenter,
+                  ),
+
+                ],
+              ),
+              margin: EdgeInsets.only(left: 0, right: 0),
+              height: 0,
+              alignment: Alignment.bottomCenter,
+            ),
+            alignment: Alignment.bottomCenter,
+          ),
+        ],
+      ),
+    );
+  }
+  String _formatDuration(Duration duration) {
+    return DateFormat('mm:ss')
+        .format(DateTime(0, 0, 0, 0, 0, duration.inSeconds));
+  }
   void loadDefaultMoods() {
     moods = [];
     moods!.add(Mood(moodName: "testtest"));
@@ -3362,9 +3446,26 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         contentList!.isNotEmpty &&
         contentList!.length >= index) {
       contentList![index].duration = position;
+    //  print("duration");
+      _sliderValue.value = position!.inSeconds.toDouble();
+   // print(position);
+     /* setState(() {
+
+      });*/
     }
   }
+  void updateTotalDuration(int index, Duration position) {
+    if (contentList != null &&
+        contentList!.isNotEmpty &&
+        contentList!.length >= index) {
+      contentList![index].totalDuration = position;
+      print("totalDuration");
+      print(position);
+      setState(() {
 
+      });
+    }
+  }
   String getContentType(String lowerCase) {
     if ((lowerCase.toLowerCase() == "positive_meditation") ||
         (lowerCase.toLowerCase() == "mantra_meditation") ||

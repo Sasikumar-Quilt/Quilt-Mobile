@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:lottie/lottie.dart';
 import 'package:quilt/main.dart';
 import 'package:quilt/src/Utility.dart';
 import 'package:quilt/src/api/BaseApiService.dart';
@@ -37,6 +38,7 @@ class EnterPasswordWidgetState extends BasePageState<EnterPasswordWidget> {
   Timer? _timer=null;
   int _start = 59;
   UserResponse? loginResponse;
+  bool isApiCalling=false;
   @override
   void initState() {
     super.initState();
@@ -196,7 +198,7 @@ class EnterPasswordWidgetState extends BasePageState<EnterPasswordWidget> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () async {
-                    if (isEnable) {
+                    if (isEnable&&!isApiCalling) {
                       verifyEmailOtp();
                     }
                   },
@@ -219,13 +221,23 @@ class EnterPasswordWidgetState extends BasePageState<EnterPasswordWidget> {
               ),
             ],
           ),
-
+          isApiCalling?Positioned(top: 0,bottom: 0,left: 0,right: 0,
+            child:  Container(
+              height: 150,
+              width: 150,
+              child: Center(
+                  child: Lottie.asset(
+                      "assets/images/feed_preloader.json",height: 150,width: 150)
+              ),
+            ),
+          ):Positioned(top: 0,bottom: 0,left: 0,right: 0,child: Container(),)
         ],),
       ),
     );
   }
 
   void verifyEmailOtp() async {
+    isApiCalling=true;
     //LoadingUtils.instance.showLoadingIndicator("Sending OTP...", context);
     loginResponse=null;
     setState(() {
@@ -251,6 +263,7 @@ class EnterPasswordWidgetState extends BasePageState<EnterPasswordWidget> {
           Navigator.pushNamedAndRemoveUntil(context, HomeWidgetRoutes.DashboardWidget, (route) => false);
         }
       } else {
+        isApiCalling=false;
         setState(() {
 
         });
@@ -258,7 +271,13 @@ class EnterPasswordWidgetState extends BasePageState<EnterPasswordWidget> {
       }
     } else {
       Utility.showSnackBar(context: context, message: apiResponse.message.toString());
+      isApiCalling=false;
+      setState(() {
+
+      });
     }
+
+
   }
 
   getArgs() {

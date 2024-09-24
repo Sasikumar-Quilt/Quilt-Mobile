@@ -107,7 +107,7 @@ void getJournalListApi() async{
   @override
   Widget build(BuildContext context) {
     return Padding(padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,left: 5,right: 5),child: Column(
+        bottom: 0,left: 5,right: 5),child: Column(
       children: [
         Container(
           child: SvgPicture.asset("assets/images/Indicator.svg"),

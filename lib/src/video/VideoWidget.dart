@@ -13,6 +13,7 @@ class VideoWidget extends StatefulWidget {
   final String audioUrl;
   final String id;
   final Function(int index, Duration) updatePosition;
+  final Function(int index, Duration) updateTotalDuration;
   final Function(int index, VideoPlayerController)? updateVideoController;
   final int index;
   final int lastPosition;
@@ -37,7 +38,7 @@ class VideoWidget extends StatefulWidget {
       required this.videoPlayerController,
       required this.id,
       required this.isVisible,
-      required this.updateVideoController})
+      required this.updateVideoController,required this.updateTotalDuration})
       : super(key: key);
 
   @override
@@ -238,10 +239,17 @@ class _VideoWidgetState extends State<VideoWidget> {
 
     await audioPlayerManager.playAudio(widget.audioUrl, _lastPosition, true);
 
+    audioPlayerManager.player.getDuration().then(
+          (value) => {
+          widget.updateTotalDuration(widget.index, value!),
+            print("updateTotalDuration")
+          }
+    );
     audioPlayerManager.withUpdateCallback((duration) => {
           //print(audioPlayerManager.getCurrentAction()),
           if (audioPlayerManager.getCurrentAction() == "Video")
             {
+
               if (duration.inMilliseconds != 0)
                 {
                   _lastPosition = duration,
@@ -256,7 +264,9 @@ class _VideoWidgetState extends State<VideoWidget> {
                         }
                     }
                   else
-                    {videoPlayerController!.pause()},
+                    {
+                      videoPlayerController!.pause()
+                    },
                   widget.updatePosition(widget.index, duration)
                 }
             }

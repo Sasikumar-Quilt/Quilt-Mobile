@@ -11,7 +11,10 @@ import 'NetworkApiService.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 class ApiHelper {
-  ApiHelper._();
+  late BaseApiService baseApiService;
+  ApiHelper._(){
+     baseApiService = NetworkApiService();
+  }
 
   static final ApiHelper _instance = ApiHelper._();
 
@@ -22,7 +25,6 @@ class ApiHelper {
     var request = {
       "email": text,
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.isAlreadyRegistered,request, Status.MOBILE_NUMBER_LOGIN);
     return response;
@@ -31,7 +33,6 @@ class ApiHelper {
     var request = {
       "email": text,
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.sendOtpEmail,request, Status.MOBILE_NUMBER_LOGIN);
     return response;
@@ -44,7 +45,6 @@ class ApiHelper {
     var request = {
       "idToken": text,
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.loginWithApple,request, Status.MOBILE_NUMBER_LOGIN);
     return response;
@@ -58,7 +58,6 @@ class ApiHelper {
       "token": text,
       "deviceType": deviceType,
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.loginWithGoogle,request, Status.MOBILE_NUMBER_LOGIN);
     return response;
@@ -68,7 +67,6 @@ class ApiHelper {
       "email": text,
       "otp":code
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.verifyOtpEmail,request, Status.MOBILE_NUMBER_LOGIN);
     return response;
@@ -79,7 +77,6 @@ class ApiHelper {
       "phoneNumber": mobileNumber,
       "otp": int.parse(otp),
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.otpVerify,request, Status.MOBILE_NUMBER_LOGIN);
     return response;
@@ -89,32 +86,27 @@ class ApiHelper {
       "countryCode": "+91",
       "phoneNumber": text
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.sendOtp,request, Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
   Future<ApiResponse> getContentList() async {
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.getResponse(Constans.contentList+PreferenceUtils.getString(PreferenceUtils.USER_ID, ""), Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
   Future<ApiResponse> getProfileDetails() async {
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.getResponse(Constans.getProfile+PreferenceUtils.getString(  PreferenceUtils.USER_ID, ""), Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
   Future<ApiResponse> getPromptNames(String word,bool isPositive) async {
-    BaseApiService baseApiService = NetworkApiService();
     String moodType=isPositive?"POSITIVE":"NEGATIVE";
     ApiResponse response =
     await baseApiService.getResponse(Constans.getSimilarPrompt+word+"&moodType="+moodType, Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
   Future<ApiResponse> getContentLists(String id,int currentSize,bool isSurpriseMe,bool isHashTag) async {
-    BaseApiService baseApiService = NetworkApiService();
     String request=Constans.getContentList+PreferenceUtils.getString(PreferenceUtils.USER_ID, "")+"&moodClusterId="+id+"&page=$currentSize&pageSize=10";
     if(isSurpriseMe){
       request=Constans.getContentList+PreferenceUtils.getString(PreferenceUtils.USER_ID, "")+"&page=$currentSize&pageSize=10&isSurpriseMe=$isSurpriseMe";
@@ -128,7 +120,6 @@ class ApiHelper {
     return response;
   }
   Future<ApiResponse> getFavList() async {
-    BaseApiService baseApiService = NetworkApiService();
     String request=Constans.getFavorites+PreferenceUtils.getString(PreferenceUtils.USER_ID, "");
 
     ApiResponse response =
@@ -136,25 +127,21 @@ class ApiHelper {
     return response;
   }
   Future<ApiResponse> getContentListWithMoodName(String id,int currentSize) async {
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.getResponse(Constans.getContentList+PreferenceUtils.getString(PreferenceUtils.USER_ID, "")+"&moodName="+id+"&page=$currentSize&pageSize=10", Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
   Future<ApiResponse> getJournalList(int date) async {
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.getResponse(Constans.getJournalList+PreferenceUtils.getString(PreferenceUtils.USER_ID, "")+"&date="+date.toString(), Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
   Future<ApiResponse> getCollections() async {
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.getResponse(Constans.getCollection+PreferenceUtils.getString(PreferenceUtils.USER_ID, ""), Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
   Future<ApiResponse> deleteCollection(String id) async {
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.deleteResponse(Constans.getCollection+PreferenceUtils.getString(PreferenceUtils.USER_ID, "")+"&collectionId="+id, Status.MOBILE_NUMBER_LOGIN);
     return response;
@@ -168,7 +155,6 @@ class ApiHelper {
       "isFavourite":isFavorite
     };
 
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.favouritesUpdate,request, Status.METRIC_DATA);
     return response;
@@ -181,7 +167,6 @@ class ApiHelper {
       "collectionName": collectionName,
     };
 
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.createCollection,request, Status.METRIC_DATA);
     return response;
@@ -194,7 +179,6 @@ class ApiHelper {
       "overallFeedback": overallFeedback,
     };
 
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.overallFeedback,request, Status.METRIC_DATA);
     return response;
@@ -213,7 +197,6 @@ class ApiHelper {
       };
     }
 
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.logContent,request, Status.METRIC_DATA);
     return response;
@@ -225,18 +208,17 @@ class ApiHelper {
       "journalResponse": text,
       "userId": PreferenceUtils.getString(  PreferenceUtils.USER_ID, ""),
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateJournal,request, Status.METRIC_DATA);
     return response;
   }
-  Future<ApiResponse> deleteJournal(String id,String text) async {
+  Future<ApiResponse> deleteJournal(String id) async {
 
     var request = {
       "userContentId": id,
       "isDeleted": true,
+      "userId": PreferenceUtils.getString(  PreferenceUtils.USER_ID, ""),
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateJournal,request, Status.METRIC_DATA);
     return response;
@@ -250,7 +232,6 @@ class ApiHelper {
       "date": date,
       "isDeleted": false,
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateJournal,request, Status.METRIC_DATA);
     return response;
@@ -262,7 +243,6 @@ class ApiHelper {
       "contentId": id,
       "contentResponse": "Good",
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.logEmi,request, Status.METRIC_DATA);
     return response;
@@ -272,7 +252,6 @@ class ApiHelper {
       "userId": PreferenceUtils.getString(  PreferenceUtils.USER_ID, ""),
       "deviceId":fcmToken
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateContentFeedback,request, Status.FCM);
     return response;
@@ -295,7 +274,6 @@ class ApiHelper {
       "comment": cFeedback,
       "isDeleted": false,
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateContentFeedback,request, Status.METRIC_DATA);
     return response;
@@ -306,7 +284,6 @@ class ApiHelper {
       "userId": PreferenceUtils.getString(PreferenceUtils.USER_ID, ""),
       "fromDate": Utility.getDateWithAdditional(Constans.DATE_FORMAT_1,5),
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.rewardDetails,request, Status.METRIC_DATA);
     return response;
@@ -323,7 +300,6 @@ class ApiHelper {
       "dataType": "ACCUMULATED",
       "metricData":mertricList
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.postMetric,request, Status.METRIC_DATA);
     return response;
@@ -338,7 +314,6 @@ class ApiHelper {
       "age":age,
       "isDeleted": false
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateProfile,request, Status.METRIC_DATA);
     return response;
@@ -347,7 +322,6 @@ class ApiHelper {
     var request = {
       "userId": PreferenceUtils.getString(PreferenceUtils.USER_ID, ""),
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.refreshToken,request, Status.REFRESH_TOKEN);
     return response;
@@ -359,7 +333,6 @@ class ApiHelper {
       "gameId":id,
       "isFavourite":isEnabled,
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.favourite,request, Status.REFRESH_TOKEN);
     return response;
@@ -379,7 +352,6 @@ class ApiHelper {
       "date": '$formattedDate$timeZoneOffset',
       "questions": answer
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateAssessment,request, Status.METRIC_DATA);
     return response;
@@ -399,20 +371,17 @@ class ApiHelper {
       "date": '$formattedDate$timeZoneOffset',
       "questions": answer
     };
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateFeedbackSurvey,request, Status.METRIC_DATA);
     return response;
   }
   Future<ApiResponse> updateUserEvent(dynamic request) async {
 
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.putRequest(Constans.updateContentFeedback,request, Status.USER_EVENT);
     return response;
   }
   Future<ApiResponse> getAssessmentList(String id) async {
-    BaseApiService baseApiService = NetworkApiService();
     ApiResponse response =
     await baseApiService.getResponse(Constans.getAssessmentList+id, Status.MOBILE_NUMBER_LOGIN);
     return response;

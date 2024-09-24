@@ -51,6 +51,7 @@ class EMIWidgetState extends State<EMIWidget> with WidgetsBindingObserver {
   late PreloadVideos preloadVideos;
   AudioPlayerManager audioPlayerManager = AudioPlayerManager();
   bool isDestroy=false;
+  bool isMute=false;
 
   @override
   void initState() {
@@ -105,7 +106,7 @@ class EMIWidgetState extends State<EMIWidget> with WidgetsBindingObserver {
       print(event);
     });*/
     //player.setReleaseMode(ReleaseMode.loop);
-    audioPlayerManager.setVolume(false);
+    audioPlayerManager.setVolume(isMute);
     /*player.onPositionChanged.listen((event) {
       //print(event);
       if (videoPlayerController != null &&
@@ -155,6 +156,7 @@ class EMIWidgetState extends State<EMIWidget> with WidgetsBindingObserver {
       isArg = true;
       final args = ModalRoute.of(context)?.settings.arguments as Map;
       contentObj = args["url"];
+      isMute = args["isMute"];
       print("EmiWidget");
       print(contentObj!.contentUrl!);
       print(contentObj!.videoURL);
@@ -653,6 +655,34 @@ class EMIWidgetState extends State<EMIWidget> with WidgetsBindingObserver {
                 itemCount: emiList.length,
               ),
               margin: EdgeInsets.only(top: 40),
+            ),
+            Container(
+              margin: EdgeInsets.only(top: 0, left: 15),
+              child: IconButton(
+                icon: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
+            GestureDetector(
+
+              child: Container(alignment: Alignment.topRight,
+                child: SvgPicture.asset(
+                    isMute
+                        ? "assets/images/muted.svg"
+                        : "assets/images/mute.svg",
+                    semanticsLabel: 'Acme Logo'),
+                margin: EdgeInsets.only(top: isMute?15:13, right: 15),
+              ),
+              onTap: () {
+                isMute = !isMute!;
+                audioPlayerManager.setVolume(isMute);
+                setState(() {});
+              },
             )
           ],
         ),

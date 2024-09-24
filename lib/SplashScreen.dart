@@ -37,7 +37,7 @@ class SplashWidget extends StatefulWidget {
 }
 
 class _AnimatedBackgroundScreenState extends State<SplashWidget>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin ,WidgetsBindingObserver{
   AnimationController? _controller;
   Animation<double>? _animation;
   double _opacity = 1.0; // Initial opacity for the text
@@ -63,7 +63,7 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
   bool isFinishedInitialSetup = false;
   bool isLoginOptions = false;
   bool isApiCalling = false;
-  int swipeCount = 0;
+  int swipeCount = -1;
   String imagePath = "assets/images/onboarding1.png";
   String instructionText =
       "When you feel stressed,\n anxious, restless, or down...";
@@ -139,10 +139,12 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
   final player = AudioPlayer();
   Map<int, VideoPlayerController> controllers = {};
   double screenHeight = 0;
-
+  bool isResumed=true;
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     initializeVideos();
     playVideo(0, false);
     if (defaultTargetPlatform == TargetPlatform.android) {
@@ -186,6 +188,22 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
       });
     }); // Start the animation
     requestPermission();
+  }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused) {
+      isResumed=false;
+      pauseAudio();
+      videoPlayerController?.pause();
+    } else if (state == AppLifecycleState.resumed) {
+      isResumed=true;
+      print("resumed");
+     if(swipeCount!=3){
+       player.resume();
+       videoPlayerController?.play();
+     }
+    }
   }
 
   Future<void> requestPermission() async {
@@ -236,8 +254,12 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
   }
 
   void playAudio(int index) async {
+
     await player.play(AssetSource(audios[index]));
-    videoPlayerController?.play();
+    if(!isResumed){
+      player.pause();
+      videoPlayerController?.play();
+    }
     player.onPlayerStateChanged.listen((event) {
       print("onPlayerStateChanged");
       print(event);
