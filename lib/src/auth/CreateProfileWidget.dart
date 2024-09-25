@@ -636,61 +636,35 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
                                   ),
                                 ),
                           const SizedBox(height: 24),
-                          Expanded(
-                            child: Column(children: [
-                              Container(
-                                margin: EdgeInsets.only(left: 15, top: 15),
-                                child: Row(
-                                  children: [
-                                    Image.asset(
-                                      "assets/images/geninfo.png",
-                                      height: 16,
-                                    ),
-                                    Container(
-                                      margin: EdgeInsets.only(left: 10),
-                                      child: Text(
-                                        "We use this information to personalize your\n experience.",
-                                        style: TextStyle(
-                                            color: Color(0xff888888),
-                                            fontSize: 14,
-                                            fontFamily: "Causten-Regular"),
-                                      ),
-                                    )
-                                  ],
+                          Container(
+                            height: 50,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (isClinicEnable) {
+                                  updateProfileDate();
+                                }
+                              },
+                              child: Text(
+                                "Create account",
+                                style: TextStyle(
+                                    color: isClinicEnable
+                                        ? Colors.black
+                                        : Color(0xff5D5D5D),
+                                    fontSize: 14,
+                                    fontFamily: "Causten-Bold"),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isClinicEnable
+                                    ? Color(0xff40A1FB)
+                                    : Color(0xFF1A1A1A),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                              Spacer(),
-                              Container(
-                                height: 50,
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    if (isClinicEnable) {
-                                      updateProfileDate();
-                                    }
-                                  },
-                                  child: Text(
-                                    "Create account",
-                                    style: TextStyle(
-                                        color: isClinicEnable
-                                            ? Colors.black
-                                            : Color(0xff5D5D5D),
-                                        fontSize: 14,
-                                        fontFamily: "Causten-Bold"),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: isClinicEnable
-                                        ? Color(0xff40A1FB)
-                                        : Color(0xFF1A1A1A),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                  ),
-                                ),
-                                width: double.infinity,
-                                margin: EdgeInsets.only(
-                                    left: 15, right: 15, bottom: 30),
-                              ),
-                            ]),
+                            ),
+                            width: double.infinity,
+                            margin: EdgeInsets.only(
+                                left: 15, right: 15, bottom: 30),
                           ),
                         ],
                       ),
