@@ -19,8 +19,6 @@ import 'package:quilt/src/api/ApiHelper.dart';
 import 'package:quilt/src/api/BaseApiService.dart';
 import 'package:quilt/src/api/NetworkApiService.dart';
 import 'package:quilt/src/api/Objects.dart';
-import 'package:quilt/src/auth/MobileNumberWidget.dart';
-import 'package:quilt/src/base/BaseState.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:touch_ripple_effect/touch_ripple_effect.dart';
 import 'package:video_player/video_player.dart';

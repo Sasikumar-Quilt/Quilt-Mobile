@@ -5,22 +5,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:quilt/main.dart';
-import 'package:quilt/src/PrefUtils.dart';
-import 'package:quilt/src/Utility.dart';
-import 'package:quilt/src/api/BaseApiService.dart';
-import 'package:quilt/src/api/LoadingUtils.dart';
-import 'package:quilt/src/api/NetworkApiService.dart';
-import 'package:quilt/src/auth/OtpWidget.dart';
 import 'package:quilt/src/base/BaseState.dart';
 
 import '../api/ApiHelper.dart';
 import '../api/Objects.dart';
-import '../userBloc/UserBloc.dart';
 import 'dart:math' as math;
 
 class FeedBackWidget extends BasePage {

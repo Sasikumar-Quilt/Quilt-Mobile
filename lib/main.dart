@@ -2,33 +2,20 @@ import 'dart:ui';
 
 import 'package:event_bus_plus/res/event_bus.dart';
 import 'package:fast_cached_network_image/fast_cached_network_image.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:quilt/src/Assessment/AssessmentListWidget.dart';
 import 'package:quilt/src/Assessment/AssessmentWidget.dart';
 import 'package:quilt/src/DashbaordWidget.dart';
-import 'package:quilt/src/HomeScreenWidget.dart';
-import 'package:quilt/src/HomeWidget.dart';
-import 'package:quilt/src/MyChromeSafariBrowser.dart';
 import 'package:quilt/src/PushNotificationService.dart';
 import 'package:quilt/src/SliderWidget.dart';
 import 'package:quilt/src/WebViewWidget.dart';
-import 'package:quilt/src/auth/EditProfile.dart';
-import 'package:quilt/src/auth/EnterAgeWidget.dart';
-import 'package:quilt/src/auth/EnterEmailWidget.dart';
-import 'package:quilt/src/auth/EnterPasswordWidget.dart';
+import 'package:quilt/src/auth/OTPWidget.dart';
 import 'package:quilt/src/auth/CreateProfileWidget.dart';
-import 'package:quilt/src/auth/GenderWidget.dart';
-import 'package:quilt/src/auth/MobileNumberWidget.dart';
-import 'package:quilt/src/auth/OtpWidget.dart';
 import 'package:quilt/src/auth/ProfileWidget.dart';
 import 'package:quilt/src/base/AppEnvironment.dart';
 import 'package:quilt/src/emi/EMIWidget.dart';
@@ -36,11 +23,9 @@ import 'package:quilt/src/favorite/FavoriteListWidget.dart';
 import 'package:quilt/src/favorite/FavoriteWidget.dart';
 import 'package:quilt/src/feed/HomeWidgetRoute.dart';
 import 'package:quilt/src/feedback/FeedbackWidget.dart';
-import 'package:quilt/src/firebase/FirebaseOptions.dart';
 import 'package:quilt/src/journal/JournalEditorWidget.dart';
 import 'package:quilt/src/journal/JournalListWidget.dart';
 import 'package:quilt/src/journal/JournalWidget.dart';
-import 'package:quilt/src/repository/AppBloc.dart';
 import 'package:quilt/src/termsAndCondition/TCWidget.dart';
 import 'package:quilt/src/video/AudioPlayerWidget.dart';
 import 'package:quilt/src/video/VideoCompletedWidget.dart';
@@ -56,17 +41,11 @@ const greyColor=Color(0xFFA0949D);
 
 final routes = <String, Widget>{
   HomeWidgetRoutes.SplashScreen:DashboardWidget(),
-  HomeWidgetRoutes.OtpScreen:OtpWidget(),
-  HomeWidgetRoutes.mobileNumberScreen:MobileNumberWidget(),
-  HomeWidgetRoutes.EnterEmailWidget:EnterEmailWidget(),
-  HomeWidgetRoutes.EnterPasswordWidget:EnterPasswordWidget(),
+  HomeWidgetRoutes.EnterPasswordWidget:OTPWidget(),
   HomeWidgetRoutes.slideScreen:SliderPage(),
   HomeWidgetRoutes.webScreenScreen:WebviewWidget(),
   HomeWidgetRoutes.profileScreen:ProfileScreen(),
-  HomeWidgetRoutes.editProfile:EditProfileScreen(),
   HomeWidgetRoutes.EnterUserNameWidget:CreateProfileWidget(),
-  HomeWidgetRoutes.EnterAgeWidget:EnterAgeWidget(),
-  HomeWidgetRoutes.GenderWidget:GenderWidget(),
   HomeWidgetRoutes.DashboardWidget:MainContainerWidget(),
   HomeWidgetRoutes.VideoplayerWidget:VideoplayerWidget(),
   HomeWidgetRoutes.VideoCompletedWidget:VideoCompletedWidget(),
@@ -117,18 +96,8 @@ void main() async{
   print(appFlavor);
   print("flavor");
   AppEnvironment.setupEnv(appFlavor);
-  /*audioHandler = await AudioService.init(
-    builder: () => AudioPlayerHandler(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.ryanheise.myapp.channel.audio',
-      androidNotificationChannelName: 'Audio playback',
-      androidNotificationOngoing: true,
-    ),
-  );*/
   await FastCachedImageConfig.init(clearCacheAfter: const Duration(days: 15));
-
   WidgetsFlutterBinding.ensureInitialized();
-
   PushNotificationService.initialize();
   FlutterError.onError = (errorDetails) {
     FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
@@ -175,15 +144,8 @@ class MyApp extends State<App> {
     routeName=route;
     final Widget nextWidget = routes[routeName]!;
     return CupertinoPageRoute( builder: (context) => nextWidget,
-      settings: settings,)/*PageTransition(
-      child: nextWidget,
-      type:PageTransitionType.rightToLeft,duration: Duration(milliseconds: 500),
-      settings: settings,
-    )*/;
-    /*return MaterialPageRoute(
-      settings: settings,
-      builder: (BuildContext context) => nextWidget,
-    );*/
+      settings: settings,);
+
   }
 }
 class MyRouteObserver extends RouteObserver<PageRoute<dynamic>> {

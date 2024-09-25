@@ -633,6 +633,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                               userTrackingHelper!.saveUserEntries("feed_exit",
                                   contentList![pageCount].contentId!);
                               pageCount = index;
+                              _sliderValue.value=0;
                               tempPageCount = pageCount;
                               isPlay = true;
                               print(pageCount);
@@ -752,7 +753,9 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                                       handleTap(index);
                                     },
                                   ),
-                                  buildSwipeAnimation()
+                                  buildSwipeAnimation(),
+                                  getSeekBarView(index)
+
                                 ],
                               );
                             },
@@ -1220,12 +1223,25 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                 ],
               ),
             ),
-            contentList![pageCount].totalDuration!=null?_buildControls():Container()
+
+
           ],
         ),
         margin: EdgeInsets.only(left: 0, right: 0, bottom: 0),
       ),
     );
+  }
+
+  Widget getSeekBarView(int index){
+   return ((contentList![index].contentType != "GAME") &&
+        (contentList![index].contentType != "JOURNAL") &&
+        (contentList![index].contentType != "EMI") &&
+        (contentList![index].contentType != "INFO_TIDBITS") &&
+        (contentList![index].contentType !=
+            "INFO_TIDBITS_OCD") &&
+        (contentList![index].contentType !=
+            "INFO_TIDBITS_GENERAL") &&
+        (contentList![index].contentType != "ASSESSMENT")&& (contentList![index].contentType != "FEEDBACK"))?_buildControls():Container();
   }
 
   Widget buildSwipeAnimation() {
@@ -3305,75 +3321,64 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   }
   Widget _buildControls() {
     return Container(
-      padding: EdgeInsets.only(top: 0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Align(
-            child: Container(
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Align(
-                    child: SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        thumbShape: RoundSliderThumbShape(
-                            enabledThumbRadius: !_isSliding ? 0 : 10),
-                        overlayShape:
-                        RoundSliderOverlayShape(overlayRadius: 20),
-                        trackHeight: 2,
-                        trackShape: CustomTrackShape(),
-                        thumbColor: Colors.white,
-                        activeTrackColor: Colors.white,
-                        inactiveTrackColor: Colors.white30,
-                        overlayColor: Colors.white.withAlpha(32),
-                      ),
-                      child: ValueListenableBuilder<double>(
-                        builder: (BuildContext context, double value, Widget? child) {
-                          return Slider(
-                            min: 0,
-                            max: contentList![pageCount].totalDuration!.inSeconds.toDouble(),
-                            value: _sliderValue.value,
-                            onChanged: (value) {
-                             /* print("seekChanged");
-                              print(value.toInt());
-                              final position = Duration(seconds: value.toInt());
-                              audioManager!.seek(position);
-                              setState(() {
-                                _sliderValue.value = value;
-                                _isSliding =
-                                true; // Indicate that sliding has started.
-                                print(_isSliding);
+      child: Align(
+        child: Container(
+          child:  SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              thumbShape: RoundSliderThumbShape(
+                  enabledThumbRadius: !_isSliding ? 0 : 5),
+              overlayShape:
+              RoundSliderOverlayShape(overlayRadius: 0),
+              trackHeight: 3,
 
-                              });*/
-                            },
-                            onChangeEnd: (value) {
-                             /* print("onChangeEnd");
-                              print(value.toInt());
-                              setState(() {
-                                _isSliding =
-                                false; // Indicate that sliding has ended.
-                                print(_isSliding);
-                              });*/
-
-                            },
-                          );
-                        },
-                        valueListenable: _sliderValue,
-                      ),
-                    ),
-                    alignment: Alignment.bottomCenter,
-                  ),
-
-                ],
-              ),
-              margin: EdgeInsets.only(left: 0, right: 0),
-              height: 0,
-              alignment: Alignment.bottomCenter,
+              trackShape: RectangularSliderTrackShape(),
+              thumbColor: Colors.white,
+              activeTrackColor: Colors.white,
+              inactiveTrackColor: Colors.white30,
+              overlayColor: Colors.white.withAlpha(32),
             ),
-            alignment: Alignment.bottomCenter,
+            child: ValueListenableBuilder<double>(
+              builder: (BuildContext context, double value, Widget? child) {
+                return Slider(
+                  min: 0,
+                  max: contentList![pageCount].totalDuration!=null?contentList![pageCount].totalDuration!.inSeconds.toDouble():200,
+                  value: contentList![pageCount].totalDuration!=null?_sliderValue.value:0,
+                  onChanged: (value) {
+                    print("seekChanged");
+                    print(value.toInt());
+                    //setState(() {
+                    _sliderValue.value = value;
+                    _isSliding =
+                    true; // Indicate that sliding has started.
+                    print(_isSliding);
+                    setState(() {
+
+                    });
+
+                    // });
+                  },
+                  onChangeEnd: (value) {
+                    print("onChangeEnd");
+                    print(value.toInt());
+                    final position = Duration(seconds: value.toInt());
+                    audioManager!.seek(position);
+                    setState(() {
+                      _isSliding =
+                      false; // Indicate that sliding has ended.
+                      print(_isSliding);
+                    });
+
+                  },
+                );
+              },
+              valueListenable: _sliderValue,
+            ),
           ),
-        ],
+          margin: EdgeInsets.only(left: 0, right: 0),
+          height: 7,
+          alignment: Alignment.bottomCenter,
+        ),
+        alignment: Alignment.bottomCenter,
       ),
     );
   }
@@ -3446,8 +3451,10 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         contentList!.isNotEmpty &&
         contentList!.length >= index) {
       contentList![index].duration = position;
+      if(!_isSliding){
+        _sliderValue.value = position!.inSeconds.toDouble();
+      }
     //  print("duration");
-      _sliderValue.value = position!.inSeconds.toDouble();
    // print(position);
      /* setState(() {
 

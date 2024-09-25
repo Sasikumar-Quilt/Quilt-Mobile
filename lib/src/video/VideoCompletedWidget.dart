@@ -15,13 +15,11 @@ import 'package:quilt/src/Utility.dart';
 import 'package:quilt/src/api/BaseApiService.dart';
 import 'package:quilt/src/api/LoadingUtils.dart';
 import 'package:quilt/src/api/NetworkApiService.dart';
-import 'package:quilt/src/auth/OtpWidget.dart';
 import 'package:quilt/src/base/BaseState.dart';
 import 'package:quilt/src/feedback/FeedbackWidget.dart';
 
 import '../api/ApiHelper.dart';
 import '../api/Objects.dart';
-import '../userBloc/UserBloc.dart';
 import 'dart:math' as math;
 
 class VideoCompletedWidget extends BasePage {
