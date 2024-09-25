@@ -221,7 +221,7 @@ class GenderWidgetState extends BasePageState<GenderWidget> {
     }
     //LoadingUtils.instance.showLoadingIndicator("Receiving...", context);
     ApiResponse apiResponse = await apiHelper.updateUserDetails(
-        "", userName, "", gender, "", int.parse(age));
+        "", userName, "", gender, "", int.parse(age),"");
     // LoadingUtils.instance.hideOpenDialog(context);
     if (apiResponse.status == Status.COMPLETED) {
       LoginResponse loginResponse = LoginResponse.fromJson(apiResponse.data);

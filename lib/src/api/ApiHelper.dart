@@ -304,7 +304,7 @@ class ApiHelper {
     await baseApiService.postResponse(Constans.postMetric,request, Status.METRIC_DATA);
     return response;
   }
-  Future<ApiResponse> updateUserDetails(String emailId,String fName,String lastName,String gender,String dob,int age) async {
+  Future<ApiResponse> updateUserDetails(String emailId,String fName,String lastName,String gender,String dob,int age,String clinicId) async {
 
     var request = {
       "userId": PreferenceUtils.getString(PreferenceUtils.USER_ID, ""),
@@ -312,7 +312,8 @@ class ApiHelper {
       "gender": gender.toUpperCase(),
       "timeZone": "GMT+3:30",
       "age":age,
-      "isDeleted": false
+      "isDeleted": false,
+      "clinicId": clinicId,
     };
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateProfile,request, Status.METRIC_DATA);
@@ -384,6 +385,13 @@ class ApiHelper {
   Future<ApiResponse> getAssessmentList(String id) async {
     ApiResponse response =
     await baseApiService.getResponse(Constans.getAssessmentList+id, Status.MOBILE_NUMBER_LOGIN);
+    return response;
+  }
+
+  Future<ApiResponse> getAllClinics() async {
+    BaseApiService baseApiService = NetworkApiService();
+    ApiResponse response =
+    await baseApiService.getResponse(Constans.getAllClinics, Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
 }
