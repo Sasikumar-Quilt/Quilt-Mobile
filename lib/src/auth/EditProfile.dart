@@ -399,7 +399,7 @@ class ProfileScreenState extends BaseState<EditProfileScreen> {
 
   void updateProfileDate() async {
     LoadingUtils.instance.showLoadingIndicator("Receiving...", context);
-    ApiResponse apiResponse = await apiHelper.updateUserDetails(emailIdCtrl.text,firstNameCtrl.text,lastNameCtrl.text,gender==0?"Male":"Female",dobNameCtrl.text,0);
+    ApiResponse apiResponse = await apiHelper.updateUserDetails(emailIdCtrl.text,firstNameCtrl.text,lastNameCtrl.text,gender==0?"Male":"Female",dobNameCtrl.text,0,"");
     LoadingUtils.instance.hideOpenDialog(context);
     if (apiResponse.status == Status.COMPLETED) {
       PostMetricResponse loginResponse = PostMetricResponse.fromJson(
