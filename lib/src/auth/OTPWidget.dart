@@ -174,26 +174,40 @@ class OTPWidgetState extends BasePageState<OTPWidget> {
                       color: Color(0xFFC84040),fontFamily: "Causten-Regular",
                       fontSize: 14),
                 ),margin: EdgeInsets.only(left: 5),)
-              ],),alignment: Alignment.center,margin: EdgeInsets.only(top: 5, left: 20, right: 15),):Container(),
-              InkWell(child: Container(
-                decoration: BoxDecoration(
-                    color: Color(0xff272727),
+              ],),alignment: Alignment.center,margin: EdgeInsets.only(top: 5, left: 20, right: 15,bottom: 30),):Container(margin: EdgeInsets.only(bottom: 30),),
+              Material(
+                color: Colors.transparent, // Makes sure the Material doesn't have its own color
+                child: Ink(
+                  decoration: BoxDecoration(
+                    color: Color(0xff272727), // Background color of the button
                     border: Border.all(
-                        color:Color(0xff272727),width: 1.9
+                      color: Color(0xff272727),
+                      width: 1.9,
                     ),
-                    borderRadius: BorderRadius.all(Radius.circular(30))),
-                child: Text(
-                  _start==0?"Resend code":"Resend in 00:$_start",
-                  style: TextStyle(color: _start==0?Colors.white:Colors.white, fontSize: 12,fontFamily: "Causten-Bold"),
+                    borderRadius: BorderRadius.all(Radius.circular(30)), // Rounded corners
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.all(Radius.circular(30)), // Same radius for ripple effect
+                    onTap: () {
+                      if (_start == 0 && !isApiCalling) {
+                        sendMailOtp();
+                      }
+                    },
+                    child: Container(
+                      child: Text(
+                        _start == 0 ? "Resend code" : "Resend in 00:$_start",
+                        style: TextStyle(
+                          color: _start == 0 ? Colors.white : Colors.white,
+                          fontSize: 12,
+                          fontFamily: "Causten-Bold",
+                        ),
+                      ),
+
+                      padding: EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
+                    ),
+                  ),
                 ),
-                margin: EdgeInsets.only(top: 30),
-                padding:
-                EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
-              ),onTap: (){
-                if(_start==0){
-                  sendMailOtp();
-                }
-              },),
+              ),
               Container(
                 height: 50,
                 child: ElevatedButton(
@@ -291,8 +305,15 @@ class OTPWidgetState extends BasePageState<OTPWidget> {
   void sendMailOtp() async{
     print("res");
     print(emailId);
+    isApiCalling=true;
+setState(() {
+
+});
     //LoadingUtils.instance.showLoadingIndicator("Sending OTP...",context);
     ApiResponse apiResponse=await apiHelper.sendOtpEmail(emailId);
+    isApiCalling=false;
+    setState(() {
+    });
     //LoadingUtils.instance.hideOpenDialog(context);
     print("loginResponse");
      if(apiResponse.status==Status.COMPLETED){

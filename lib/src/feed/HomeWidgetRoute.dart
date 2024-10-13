@@ -8,16 +8,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:quilt/src/DashbaordWidget.dart';
 import 'package:quilt/src/PrefUtils.dart';
+import 'package:quilt/src/api/Objects.dart';
 
 import '../../main.dart';
-
 
 Color appColorBlack = Colors.black;
 Color appColorGrey = Colors.grey[600]!;
 Color selectedTabColor = Color(0xff192c96);
 
- bool? isShowBottom = true;
- String currentRouteName = HomeWidgetRoutes.DashboardWidget;
+bool? isShowBottom = true;
+String currentRouteName = HomeWidgetRoutes.DashboardWidget;
 
 class _HomeWidgetStateProvider extends InheritedWidget {
   final HomeWidgetState? state;
@@ -34,14 +34,15 @@ class MainContainerWidget extends StatefulWidget {
 }
 
 class HomeWidgetState extends State<MainContainerWidget>
-    with TickerProviderStateMixin , WidgetsBindingObserver{
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   static HomeWidgetState? of(BuildContext context) {
     return (context
                 .dependOnInheritedWidgetOfExactType<_HomeWidgetStateProvider>()
             as _HomeWidgetStateProvider)
         .state;
   }
-  int _currentIndex=0;
+
+  int _currentIndex = 0;
   static int viewPos = 0;
   static bool isBack = false;
   static final navKey = GlobalKey<NavigatorState>();
@@ -50,9 +51,7 @@ class HomeWidgetState extends State<MainContainerWidget>
 
   get isInitialRoute => currentRouteName == initialRouteName;
 
-
   Future<bool> onBackPress() async {
-
     isBack = false;
     if (!navKey.currentState!.canPop()) {
       return true;
@@ -61,13 +60,15 @@ class HomeWidgetState extends State<MainContainerWidget>
     updateRouteName();
     return false;
   }
-@override
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     print("object111");
   }
+
   static void setupListener() {
-     const platform = MethodChannel('com.quilt/communication');
+    const platform = MethodChannel('com.quilt/communication');
 
     platform.setMethodCallHandler((MethodCall call) async {
       if (call.method == "onAppDestroy") {
@@ -77,33 +78,59 @@ class HomeWidgetState extends State<MainContainerWidget>
       }
     });
   }
+
   @override
   void initState() {
     super.initState();
-
+    print("dashboardInitial");
+    print(_currentIndex);
   }
+
   void updateRouteName() {
     /// Check current route with popUntil callback function
     navKey.currentState!.popUntil((route) {
       final String? routeName = route.settings.name;
-      log("routeName1");
+
+      log("routeName123");
       log(routeName.toString());
       log(viewPos.toString());
-      if(routeName==HomeWidgetRoutes.FavoriteWidget||routeName==HomeWidgetRoutes.DashboardWidget||routeName=="/"||routeName==null){
-        isShowBottom=true;
-      }else{
-        isShowBottom=false;
+      log((route is ModalBottomSheetRoute).toString());
+      if (!(route is ModalBottomSheetRoute)) {
+        if (routeName == HomeWidgetRoutes.FavoriteWidget ||
+            routeName == HomeWidgetRoutes.profileScreen ||
+            routeName == HomeWidgetRoutes.DashboardWidget ||
+            routeName == "/" ||
+            routeName == null) {
+          isShowBottom = true;
+          if (routeName == HomeWidgetRoutes.FavoriteWidget) {
+            _currentIndex = 1;
+            PreferenceUtils.setInt("currentTap", _currentIndex);
+          }else   if (routeName == HomeWidgetRoutes.profileScreen) {
+            _currentIndex = 2;
+            PreferenceUtils.setInt("currentTap", _currentIndex);
+          }
+        } else {
+          isShowBottom = false;
+        }
+        if (routeName == "/" ||
+            routeName == null ||
+            routeName == HomeWidgetRoutes.DashboardWidget) {
+          _currentIndex = 0;
+          print("_currentIndex");
+          print(_currentIndex);
+          PreferenceUtils.setInt("currentTap", _currentIndex);
+          setState(() {});
+        }
+        navKey.currentState!.setState(() {
+          currentRouteName = routeName == null ? "/" : routeName;
+        });
+      } else {
+        if (_currentIndex == 2 || _currentIndex == 1) {
+          _currentIndex = 0;
+          setState(() {});
+        }
+        print("model");
       }
-      if(routeName=="/"||routeName==null||routeName==HomeWidgetRoutes.DashboardWidget){
-        _currentIndex=0;
-        print("_currentIndex");
-        print(_currentIndex);
-        PreferenceUtils.setInt("currentTap", _currentIndex);
-        setState(() {});
-      }
-      navKey.currentState!.setState(() {
-        currentRouteName = routeName==null?"/":routeName;
-      });
 
       /// Return true to not pop
       return true;
@@ -116,6 +143,7 @@ class HomeWidgetState extends State<MainContainerWidget>
     print(oldWidget);
     print("oldWidget111");
   }
+
   @override
   void dispose() {
     super.dispose();
@@ -124,177 +152,318 @@ class HomeWidgetState extends State<MainContainerWidget>
 
   @override
   Widget build(BuildContext context) {
-   HomeObserver routeObserver = HomeObserver(updateRoutes);
+    HomeObserver routeObserver = HomeObserver(updateRoutes);
 
-  return _HomeWidgetStateProvider(
+    return _HomeWidgetStateProvider(
       state: this,
-      child: WillPopScope(child: Scaffold(backgroundColor: Colors.black,
-          body: MaterialApp(
-            navigatorKey: navKey,
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              primaryColor: Colors.white,
-            ),
-            home: DashboardWidget(),
-            onGenerateRoute: onGenerateRoute,navigatorObservers: [routeObserver],
-          ),
-          bottomNavigationBar: isShowBottom!
-              ? Container(
-            height: Platform.isIOS?95:80,padding: EdgeInsets.only(bottom: Platform.isIOS?10:0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  margin: EdgeInsets.only(left: 0, right: 0, bottom: 0),
-                  decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.all(Radius.circular(0))),
-                  padding: EdgeInsets.only(top: 5, bottom: 5),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      InkWell(child: Container(child: Column(crossAxisAlignment: CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,children: [
-                        Container(decoration:  _currentIndex==0?BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xffDA328D).withOpacity(0.6),
-                              blurRadius: 20,
-                              spreadRadius: 8,
+      child: WillPopScope(
+          child: Scaffold(
+              backgroundColor: Colors.black,
+              body: MaterialApp(
+                navigatorKey: navKey,
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  primaryColor: Colors.white,
+                ),
+                home: DashboardWidget(),
+                onGenerateRoute: onGenerateRoute,
+                navigatorObservers: [routeObserver],
+              ),
+              bottomNavigationBar: isShowBottom!
+                  ? Container(
+                      height: Platform.isIOS ? 95 : 80,
+                      padding: EdgeInsets.only(bottom: Platform.isIOS ? 10 : 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            margin:
+                                EdgeInsets.only(left: 0, right: 0, bottom: 0),
+                            decoration: BoxDecoration(
+                                color: Colors.black,
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(0))),
+                            padding: EdgeInsets.only(top: 5, bottom: 5),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                InkWell(
+                                  child: Container(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          decoration: _currentIndex == 0
+                                              ? BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Color(0xffDA328D)
+                                                          .withOpacity(0.6),
+                                                      blurRadius: 20,
+                                                      spreadRadius: 8,
+                                                    ),
+                                                  ],
+                                                )
+                                              : null,
+                                          child: SvgPicture.asset(
+                                              _currentIndex == 0
+                                                  ? "assets/images/house.svg"
+                                                  : "assets/images/home_unselect.svg",
+                                              semanticsLabel: 'Acme Logo'),
+                                        ),
+                                        Container(
+                                          margin: EdgeInsets.only(top: 5),
+                                          child: Text(
+                                            "Home",
+                                            style: TextStyle(
+                                                color: _currentIndex == 0
+                                                    ? Color(0xffDA328D)
+                                                    : Color(0xff888888),
+                                                fontFamily: "Causten-Medium"),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                    margin: EdgeInsets.only(right: 0),
+                                  ),
+                                  onTap: () {
+                                    _onTabTapped(0);
+                                  },
+                                ),
+                                InkWell(
+                                  child: Container(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          decoration: _currentIndex == 1
+                                              ? BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Color(0xff40A1FB)
+                                                          .withOpacity(0.6),
+                                                      blurRadius: 20,
+                                                      spreadRadius: 8,
+                                                    ),
+                                                  ],
+                                                )
+                                              : null,
+                                          child: SvgPicture.asset(
+                                              _currentIndex == 1
+                                                  ? "assets/images/bookmark_selected.svg"
+                                                  : "assets/images/BookmarkSimple.svg",
+                                              semanticsLabel: 'Acme Logo',
+                                              color: _currentIndex == 1
+                                                  ? Color(0xff40A1FB)
+                                                  : null),
+                                        ),
+                                        Container(
+                                          margin: EdgeInsets.only(top: 5),
+                                          child: Text(
+                                            "Favorites",
+                                            style: TextStyle(
+                                                color: _currentIndex == 1
+                                                    ? Color(0xff40A1FB)
+                                                    : Color(0xff888888),
+                                                fontFamily: "Causten-Medium"),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                    margin: EdgeInsets.only(right: 0),
+                                  ),
+                                  onTap: () {
+                                    _onTabTapped(1);
+                                  },
+                                ),
+                                InkWell(
+                                  child: Container(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          decoration: _currentIndex == 2
+                                              ? BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Color(0xffAB0DD2)
+                                                          .withOpacity(0.6),
+                                                      blurRadius: 20,
+                                                      spreadRadius: 8,
+                                                    ),
+                                                  ],
+                                                )
+                                              : null,
+                                          child: SvgPicture.asset(
+                                              _currentIndex == 2
+                                                  ? "assets/images/user_selected.svg"
+                                                  : "assets/images/User1.svg",
+                                              semanticsLabel: 'Acme Logo'),
+                                        ),
+                                        Container(
+                                          margin: EdgeInsets.only(top: 5),
+                                          child: Text(
+                                            "Profile",
+                                            style: TextStyle(
+                                                color: _currentIndex == 2
+                                                    ? Color(0xffAB0DD2)
+                                                    : Color(0xff888888),
+                                                fontFamily: "Causten-Medium"),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                    margin: EdgeInsets.only(right: 0),
+                                  ),
+                                  onTap: () {
+                                    _onTabTapped(2);
+                                  },
+                                ),
+                              ],
                             ),
-                          ],
-                        ):null,
-                          child: SvgPicture.asset(
-                              _currentIndex==0?"assets/images/house.svg":"assets/images/home_unselect.svg",
-                              semanticsLabel: 'Acme Logo'),
-                        ),
-                        Container(margin: EdgeInsets.only(top: 5),child: Text("Home",style: TextStyle(color:  _currentIndex==0?Color(0xffDA328D):Color(0xff888888),fontFamily: "Causten-Medium"),),)
-                      ],),margin: EdgeInsets.only(right: 50),),onTap: (){
-                        _onTabTapped(0);
-                      },),
-                      InkWell(child: Container(child: Column(crossAxisAlignment: CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,children: [
-                        Container(decoration:  _currentIndex==1?BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xff40A1FB).withOpacity(0.6),
-                              blurRadius: 20,
-                              spreadRadius: 8,
-                            ),
-                          ],
-                        ):null,
-                          child: SvgPicture.asset(
-                              _currentIndex==1? "assets/images/bookmark_selected.svg":"assets/images/BookmarkSimple.svg",
-                              semanticsLabel: 'Acme Logo',color: _currentIndex==1?Color(0xff40A1FB):null),
-                        ),
-                        Container(margin: EdgeInsets.only(top: 5),child: Text("Favorites",style: TextStyle(color: _currentIndex==1?Color(0xff40A1FB):Color(0xff888888),fontFamily: "Causten-Medium"),),)
-                      ],),margin: EdgeInsets.only(right: 0),),onTap: (){
-                        _onTabTapped(1);
-                      },),
-                      /*InkWell(child: Container(child: Column(crossAxisAlignment: CrossAxisAlignment.center,mainAxisAlignment: MainAxisAlignment.center,children: [
-                        Container(decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-
-                          ],
-                        ),
-                          child: SvgPicture.asset(
-                              "assets/images/User1.svg",
-                              semanticsLabel: 'Acme Logo'),
-                        ),
-                        Container(margin: EdgeInsets.only(top: 5),child: Text("Profile",style: TextStyle(color: _currentIndex==2?Color(0xffDA328D):Color(0xff888888),fontFamily: "Causten-Medium"),),)
-                      ],),margin: EdgeInsets.only(right: 0),),onTap: (){
-                      },),*/
-
-                    ],
-                  ),
-                )
-              ],
-            ),
-            alignment: Alignment.bottomCenter,
-          )
-              : null), onWillPop: onBackPress),
+                          )
+                        ],
+                      ),
+                      alignment: Alignment.bottomCenter,
+                    )
+                  : null),
+          onWillPop: onBackPress),
     );
   }
+
   void _onTabTapped(int index) {
     PreferenceUtils.setInt("currentTap", index);
-    if(_currentIndex!=index){
+    if (_currentIndex != index) {
       setState(() {
         _currentIndex = index;
-        currentTab=index;
+        currentTab = index;
       });
-      if(_currentIndex==1){
+      if (_currentIndex == 1) {
         navKey.currentState!.pushNamed(HomeWidgetRoutes.FavoriteWidget);
-      }else{
-        for(int i=0;i<5;i++){
-          if(!navKey.currentState!.canPop()){
+      } else if (_currentIndex == 2) {
+        navKey.currentState!.pushNamed(HomeWidgetRoutes.profileScreen);
+      } else {
+
+        navKey.currentState?.popUntil((route) {
+          // Check if the route is the first screen by name or any other condition
+          if (route is ModalBottomSheetRoute) {
+            print("ModalBottomSheetRoute");
+            return true; // Continue popping until the condition is met
+          }
+
+          // Check if we have reached the initial route or first screen
+          return route.isFirst;
+        });
+       /* for (int i = 0; i < 1; i++) {
+         *//* final currentRoute = navKey.currentState!.overlay?.context.findAncestorStateOfType<NavigatorState>()?.context;
+          final modalRoute = ModalRoute.of(currentRoute!);
+
+          if (modalRoute is ModalBottomSheetRoute) {
+            print("ModalBottomSheetRoute");
             break;
           }
-          navKey.currentState!.pop();
-          updateRouteName();
-        }
+          if (!navKey.currentState!.canPop()) {
+            print("canPop");
+            break;
+          }*//*
+        //  navKey.currentState!.pop();
+          //updateRouteName();
+        }*/
       }
     }
-
   }
-  updateRoutes(bool? isShow,String routeName){
-    isShowBottom=isShow;
-    currentRouteName=routeName;
-    if((routeName=="/")||(routeName==HomeWidgetRoutes.DashboardWidget)||(routeName==null)){
-      _currentIndex=0;
+
+  updateRoutes(bool? isShow, String routeName) {
+    isShowBottom = isShow;
+    currentRouteName = routeName;
+    if ((routeName == "/") ||
+        (routeName == HomeWidgetRoutes.DashboardWidget) ||
+        (routeName == null)) {
+      _currentIndex = 0;
     }
     PreferenceUtils.setInt("currentTap", _currentIndex);
-    setState(() {
-
-    });
+    setState(() {});
   }
+
   Route onGenerateRoute(RouteSettings settings) {
     final String? routeName = settings.name;
     print(routeName);
     print("routeName");
     print(routeName);
     final Widget nextWidget = routes[routeName]!;
-    if(routeName==HomeWidgetRoutes.FavoriteWidget||routeName==HomeWidgetRoutes.DashboardWidget||routeName==null){
-      isShowBottom=true;
-    }else{
-      isShowBottom=false;
+    if (routeName == HomeWidgetRoutes.FavoriteWidget ||
+        routeName == HomeWidgetRoutes.profileScreen ||
+        routeName == HomeWidgetRoutes.DashboardWidget ||
+        routeName == null) {
+      isShowBottom = true;
+    } else {
+      isShowBottom = false;
     }
     setState(() {
       currentRouteName = routeName!;
     });
-    return CupertinoPageRoute( builder: (context) => nextWidget,
-      settings: settings,)/*MaterialPageRoute(
+    return CupertinoPageRoute(
+      builder: (context) => nextWidget,
+      settings: settings,
+    ) /*MaterialPageRoute(
       settings: settings,
       builder: (BuildContext context) => nextWidget,
-    )*/;
+    )*/
+        ;
   }
-
 }
 
 class HomeObserver extends RouteObserver<PageRoute<dynamic>> {
-   final Function(bool? isShowBottom,String currentRouteName) updateRoutes;
-   HomeObserver( this.updateRoutes);
+  final Function(bool? isShowBottom, String currentRouteName) updateRoutes;
+
+  HomeObserver(this.updateRoutes);
+
   @override
   void didPop(Route route, Route? previousRoute) {
     print("didPop1");
-    routeName=previousRoute?.settings.name;
+    routeName = previousRoute?.settings.name;
     print("routeName");
     print(routeName);
+    print(route is ModalBottomSheetRoute);
+    print(previousRoute is ModalBottomSheetRoute);
+    if (previousRoute is ModalBottomSheetRoute) {
+      print("currentRouteName");
+      print(route.settings.name);
+    } else {
+      if ((routeName == HomeWidgetRoutes.FavoriteWidget) ||
+          (routeName == HomeWidgetRoutes.profileScreen) ||
+          (routeName == "/") ||
+          (routeName == HomeWidgetRoutes.DashboardWidget) ||
+          (routeName == null)) {
+        isShowBottom = true;
+      } else {
+        isShowBottom = false;
+      }
 
-    if((routeName==HomeWidgetRoutes.FavoriteWidget)||(routeName=="/")||(routeName==HomeWidgetRoutes.DashboardWidget)||(routeName==null)){
-      isShowBottom=true;
-    }else{
-      isShowBottom=false;
+      currentRouteName = routeName == null ? "/" : routeName!;
+      updateRoutes(isShowBottom, currentRouteName);
     }
 
-    currentRouteName = routeName==null?"/":routeName!;
-    updateRoutes(isShowBottom,currentRouteName);
     super.didPop(route, previousRoute);
   }
-   @override
-   void didRemove(Route route, Route? previousRoute) {
-     super.didRemove(route, previousRoute);
-     print("didRemove1");
-   }
+
+  @override
+  void didRemove(Route route, Route? previousRoute) {
+    super.didRemove(route, previousRoute);
+    print("didRemove1");
+  }
 }

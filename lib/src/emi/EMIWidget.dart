@@ -156,7 +156,7 @@ class EMIWidgetState extends State<EMIWidget> with WidgetsBindingObserver {
       isArg = true;
       final args = ModalRoute.of(context)?.settings.arguments as Map;
       contentObj = args["url"];
-      isMute = args["isMute"];
+      isMute = args["isMute"]??false;
       print("EmiWidget");
       print(contentObj!.contentUrl!);
       print(contentObj!.videoURL);

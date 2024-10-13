@@ -13,7 +13,7 @@ abstract class AppEnvironment{
       case "Prod":
         baseApiUrl="https://nocd-prod.q-u-i-l-t.com/api/";
         fcmBase="https://notifications.q-u-i-l-t.com/notifications/saveDeviceId";
-        userEventBase="https://api-staging.q-u-i-l-t.com/api/events/add";
+        userEventBase="https://nocd-prod.q-u-i-l-t.com/api/events/add";
         break;
       case "Staging":
         baseApiUrl="https://api-staging.q-u-i-l-t.com/api/";
@@ -23,7 +23,7 @@ abstract class AppEnvironment{
       case "Demo":
         baseApiUrl="https://demo.q-u-i-l-t.com/api/";
         fcmBase="https://notifications-staging.q-u-i-l-t.com/notifications/saveDeviceId";
-        userEventBase="https://api-staging.q-u-i-l-t.com/api/events/add";
+        userEventBase="https://demo.q-u-i-l-t.com/api/events/add";
         break;
     }
     print("setupEnv");

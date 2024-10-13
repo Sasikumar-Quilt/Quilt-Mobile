@@ -146,7 +146,9 @@ class ProfileObject {
   String email = "";
   String phoneNumber = "";
   String countryCode = "";
+  String profilePicture = "";
   String gender = "";
+  String age = "";
   String timeZone = "";
   String dob = "";
   int status = 0;
@@ -157,15 +159,43 @@ class ProfileObject {
     status = json['status'] != null ? json['status'] : 0;
     if (json["data"] != null) {
       var pData = json["data"];
-      firstName = pData["firstName"];
-      lastName = pData["lastName"];
-      email = pData["email"];
-      phoneNumber = pData["phoneNumber"];
-      countryCode = pData["countryCode"];
-      gender = pData["gender"];
-      dob = pData["dob"];
-      timeZone = pData["timeZone"];
+      firstName = pData["firstName"]??"";
+      lastName = pData["lastName"]??"";
+      email = pData["email"]??"";
+      phoneNumber = pData["phoneNumber"]??"";
+      countryCode = pData["countryCode"]??"";
+      profilePicture = pData["profilePicture"]??"";
+      gender = pData["gender"]??"";
+      dob = pData["dob"]??"";
+      age = pData["age"].toString()??"";
+      timeZone = pData["timeZone"]??"";
     }
+  }
+  ProfileObject.sFromJson(Map<String, dynamic> json) {
+    firstName = json["firstName"];
+    lastName = json["lastName"];
+    email = json["email"];
+    phoneNumber = json["phoneNumber"];
+    countryCode = json["countryCode"];
+    profilePicture = json["profilePicture"];
+    gender = json["gender"];
+    dob = json["dob"];
+    age = json["age"]??"";
+    timeZone = json["timeZone"];
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'countryCode': countryCode,
+      'profilePicture': profilePicture,
+      'gender': gender,
+      'dob': dob,
+      'age': age,
+      'timeZone': timeZone,
+    };
   }
 }
 
@@ -180,7 +210,7 @@ class ResponseModel {
   ResponseModel.fromJson(Map<String, dynamic> json,String input) {
     message = json['message'];
     status = json['status'];
-    if (json['data'] != null) {
+    if (json['data'] != null&& json['data'].isNotEmpty) {
       json['data'].forEach((key, value) {
         if (key != "word") {
           print(key);
@@ -460,6 +490,7 @@ class CreateCollectionObject{
 class CollectionObject{
   String? id;
   String? collectionId;
+  String collectionCount="0";
   String? collectionName;
   CollectionObject();
    CollectionObject.fromJson(Map<String, dynamic> json) {
@@ -617,6 +648,16 @@ class AssessmentQuestionsOptions{
 class NotificationEvent extends AppEvent{
   List<String> id;
   NotificationEvent(this.id);
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => id;
+
+
+}
+class ClickEvent extends AppEvent{
+  List<int> id;
+  ClickEvent(this.id);
 
   @override
   // TODO: implement props

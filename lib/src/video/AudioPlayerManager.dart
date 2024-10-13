@@ -75,7 +75,9 @@ this.updateAudioPosition=updateAudioPosition!;
   }
   void pause() async{
     print("audionPaused");
-    await player.pause();
+    if(player.state!=PlayerState.disposed){
+      await player.pause();
+    }
   }
   void seek(Duration duration){
     player.seek(duration);

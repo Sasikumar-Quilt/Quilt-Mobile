@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
+import 'package:quilt/src/favorite/ChangeFavoriteCollectionDialog.dart';
 import 'package:quilt/src/favorite/CollectionHelper.dart';
 
 import '../../main.dart';
@@ -14,6 +15,7 @@ import '../api/BaseApiService.dart';
 import '../api/NetworkApiService.dart';
 import '../api/Objects.dart';
 
+bool isActionUpdate=false;
 class FavoriteListWidget extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
@@ -36,6 +38,7 @@ class FavoriteState extends State<FavoriteListWidget> {
   @override
   void initState() {
     super.initState();
+    isActionUpdate=false;
     userTrackingHelper = UserTrackingHelper();
   }
 
@@ -175,8 +178,9 @@ class FavoriteState extends State<FavoriteListWidget> {
                             alignment: Alignment.center,
                           ),
                           onTap: () {
-                            updateFavorite(contentList![index].id!,
-                                favoriteListObject!.collectionId, index);
+                            showFavModelSheet(context,favoriteListObject!.collectionId,contentList![index].id!,index);
+                          /*  updateFavorite(contentList![index].id!,
+                                favoriteListObject!.collectionId, index);*/
                           },
                         )
                       ],
@@ -354,7 +358,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                           "?",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontSize: 20,
                           fontFamily: "Causten-Medium"),
                     ),
@@ -430,6 +434,7 @@ class FavoriteState extends State<FavoriteListWidget> {
         .then((loginResponse) => {
               if (loginResponse.status == 200)
                 {
+                  isActionUpdate=true,
                   collectionHelper!.getCollectionList(),
                   eventBus.fire(MyEvent(contentList!)),
                   Navigator.of(context).pop({"isDeleted": true})
@@ -451,11 +456,17 @@ class FavoriteState extends State<FavoriteListWidget> {
   }
 
   Future<void> createCollectionApi(String collectionName) async {
+    isApiCalling=true;
+    setState(() {
+
+    });
     collectionHelper
         .updateCollectionName(collectionName, favoriteListObject!.collectionId)
         .then((collectionObject) => {
               if (collectionObject.collectionObject != null)
                 {
+        isActionUpdate=true,
+                  isApiCalling=false,
                   favoriteListObject!.collectionName =
                       mobileNumberCntrl.text.toString(),
                   setState(() {})
@@ -470,7 +481,41 @@ class FavoriteState extends State<FavoriteListWidget> {
       });
     }*/
   }
+  void showFavModelSheet(BuildContext context,String collectionId,String contentId,int index) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      enableDrag: true,
+      isDismissible: true,
+      builder: (BuildContext context) {
+        return Padding(
+            padding: MediaQuery.of(context).viewInsets,
+            child: ChangeFavoriteCollectionDialog(collectionHelper!.collectionList,
+                collectionId, contentId));
+      },
+    ).then((value) => {
+      updateList(value,index)
+    });
+  }
+  void updateList(value,int index){
+    if(value!=null&&value["isUpdated"]){
+      isActionUpdate=true;
+      List<ContentObj> contsList = [];
+      contsList.add(contentList![index]);
+      eventBus.fire(MyEvent(contsList));
+        contentList.removeAt(index);
+        if(contentList.isNotEmpty){
+          setState(() {
 
+          });
+
+        }else{
+          Navigator.of(context).pop();
+        }
+
+    }
+  }
   void showActionModel() {
     mobileNumberCntrl.text = favoriteListObject!.collectionName;
     isNewCollection = false;
@@ -603,14 +648,12 @@ class FavoriteState extends State<FavoriteListWidget> {
                           child: Text(
                             "Save",
                             style: TextStyle(
-                                color: isEnable
-                                    ? Color(0xff1A1A1A)
-                                    : Color(0xffB0B0B0),
+                                color: Colors.black,
                                 fontSize: 14,
                                 fontFamily: "Causten-Medium"),
                           ),
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xffECECEC),
+                              backgroundColor: Color(0xff40A1FB),
                               shape: RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius.circular(30), // <-- Radius

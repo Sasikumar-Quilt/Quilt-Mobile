@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lottie/lottie.dart';
 import 'package:quilt/main.dart';
 import 'package:quilt/src/Utility.dart';
 import 'package:quilt/src/api/BaseApiService.dart';
@@ -38,6 +39,7 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
   String errorMessage = "";
   String ageErrorMessage = "";
   int selectedindex = 0;
+  bool isApiCalling=false;
   PageController _pageController = PageController();
   int selectedItem = -1;
   TextEditingController ageCntrl = new TextEditingController();
@@ -192,7 +194,7 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
                                   fontFamily: "Causten-Medium"),
                               decoration: InputDecoration(
                                 border: InputBorder.none,
-                                filled: true,
+                                filled: true,counterText: "",
                                 fillColor: Colors.transparent,
                                 contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 25.0, vertical: 15),
@@ -597,77 +599,89 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
                   } else {
                     return Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Select a clinic',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'Causten-Medium',
-                              fontSize: 24,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white,
+                      child: Stack(children: [
+                        Column(
+                          children: [
+                            const Text(
+                              'Select a clinic',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Causten-Medium',
+                                fontSize: 24,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 18),
-                          _isLoading
-                              ? const CircularProgressIndicator()
-                              : Expanded(
-                                  child: ListView.builder(
-                                    itemCount: _clinics.length,
-                                    itemBuilder: (context, index) {
-                                      return Padding(
-                                        padding: EdgeInsets.only(bottom: 16),
-                                        child: ProfileClinicItem(
-                                          text: _clinics[index].clinicName,
-                                          isSelected:
-                                              _clinics[index].isSelected,
-                                          onPressed: () {
-                                            for (var i = 0; i < _clinics.length; i++) {
-                                              _clinics[i].isSelected = i == index;
-                                            }
-                                            isClinicEnable = true;
-                                            setState(() {});
-                                          },
-                                        ),
-                                      );
-                                    },
-                                    shrinkWrap: false,
+                            const SizedBox(height: 18),
+                            _isLoading
+                                ? const CircularProgressIndicator()
+                                : Expanded(
+                              child: ListView.builder(
+                                itemCount: _clinics.length,
+                                itemBuilder: (context, index) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(bottom: 16),
+                                    child: ProfileClinicItem(
+                                      text: _clinics[index].clinicName,
+                                      isSelected:
+                                      _clinics[index].isSelected,
+                                      onPressed: () {
+                                        for (var i = 0; i < _clinics.length; i++) {
+                                          _clinics[i].isSelected = i == index;
+                                        }
+                                        isClinicEnable = true;
+                                        setState(() {});
+                                      },
+                                    ),
+                                  );
+                                },
+                                shrinkWrap: false,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Container(
+                              height: 50,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  if (isClinicEnable) {
+                                    updateProfileDate();
+                                  }
+                                },
+                                child: Text(
+                                  "Create account",
+                                  style: TextStyle(
+                                      color: isClinicEnable
+                                          ? Colors.black
+                                          : Color(0xff5D5D5D),
+                                      fontSize: 14,
+                                      fontFamily: "Causten-Bold"),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isClinicEnable
+                                      ? Color(0xff40A1FB)
+                                      : Color(0xFF1A1A1A),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
                                   ),
                                 ),
-                          const SizedBox(height: 24),
-                          Container(
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                if (isClinicEnable) {
-                                  updateProfileDate();
-                                }
-                              },
-                              child: Text(
-                                "Create account",
-                                style: TextStyle(
-                                    color: isClinicEnable
-                                        ? Colors.black
-                                        : Color(0xff5D5D5D),
-                                    fontSize: 14,
-                                    fontFamily: "Causten-Bold"),
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isClinicEnable
-                                    ? Color(0xff40A1FB)
-                                    : Color(0xFF1A1A1A),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
+                              width: double.infinity,
+                              margin: EdgeInsets.only(
+                                  left: 15, right: 15, bottom: 30),
                             ),
-                            width: double.infinity,
-                            margin: EdgeInsets.only(
-                                left: 15, right: 15, bottom: 30),
+                          ],
+                        ),
+                        isApiCalling?Positioned(top: 0,bottom: 0,left: 0,right: 0,
+                          child:  Container(
+                            height: 150,
+                            width: 150,
+                            child: Center(
+                                child: Lottie.asset(
+                                    "assets/images/feed_preloader.json",height: 150,width: 150)
+                            ),
                           ),
-                        ],
-                      ),
+                        ):Positioned(top: 0,bottom: 0,left: 0,right: 0,child: Container(),)
+                      ],),
                     );
                   }
                 },
@@ -680,27 +694,6 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
     );
   }
 
-  void mobileNumberLogin() async {
-    LoadingUtils.instance.showLoadingIndicator("Sending OTP...", context);
-    ApiResponse apiResponse = await _apiHelper
-        .mobileNumberLoginApi(mobileNumberCntrl.text.toString());
-    LoadingUtils.instance.hideOpenDialog(context);
-    print("loginResponse");
-    if (apiResponse.status == Status.COMPLETED) {
-      LoginResponse loginResponse = LoginResponse.fromJson(apiResponse.data);
-
-      print(loginResponse.status);
-      if (loginResponse.status == 200) {
-        Navigator.pushNamed(context, HomeWidgetRoutes.OtpScreen,
-            arguments: {"mobileNumber": mobileNumberCntrl.text.toString()});
-      } else {
-        Utility.showSnackBar(context: context, message: loginResponse.message);
-      }
-    } else {
-      Utility.showSnackBar(
-          context: context, message: apiResponse.message.toString());
-    }
-  }
 
   Widget _buildIndicator() {
     List<Widget> indicators = [];
@@ -774,6 +767,10 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
   }
 
   void updateProfileDate() async {
+    isApiCalling=true;
+    setState(() {
+
+    });
     String gender = "";
     if (selectedItem == 0) {
       gender = "Male";
@@ -805,6 +802,10 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
       Utility.showSnackBar(
           context: context, message: apiResponse.message.toString());
     }
+    isApiCalling=false;
+    setState(() {
+
+    });
   }
 
   void showModel() {

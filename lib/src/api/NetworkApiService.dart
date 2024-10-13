@@ -2,7 +2,10 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:quilt/src/dialog/GlobalContextService.dart';
+
 import '../PrefUtils.dart';
+import '../dialog/UnAuthorizedDialog.dart';
 import 'AppException.dart';
 import 'BaseApiService.dart';
 import 'package:http/http.dart' as http;
@@ -32,37 +35,32 @@ class NetworkApiService extends BaseApiService {
   Future putRequest(String url, Map<String, dynamic> jsonBody, Status status) async {
   dynamic responseJson;
   try {
-    print("postRequest");
+    print("putRequest");
     Map<String, String> requestHeaders;
-    if(status==Status.MOBILE_NUMBER_LOGIN){
-      requestHeaders = {
-        'Content-Type': 'application/json',
-        'Authorization': "Bearer 11b623f7-cb76-4130-a7d5-ba24eb1590d6"
-      };
-    }else{
-      requestHeaders = {
-        'Content-Type': 'application/json',
-        'Authorization': "Bearer ${PreferenceUtils.getString(PreferenceUtils.SESSION_TOKEN, "")}"
-      };
+    requestHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization': "Bearer ${PreferenceUtils.getString(PreferenceUtils.SESSION_TOKEN, "")}"
+    };
+    String baseUrl=BaseApiService.user_event;
 
-    }
-    String baseUrl=status==Status.FCM?BaseApiService.fcm_base:BaseApiService.baseUrl + url;
-    if(status==Status.USER_EVENT){
-      baseUrl=BaseApiService.user_event;
-    }
     print(baseUrl);
+    print(requestHeaders);
     http.Response response = await http.put(Uri.parse(baseUrl),
         body: jsonEncode(jsonBody), headers: requestHeaders);
-    print(jsonEncode(jsonBody));
-    print("postResponse");
+    log(jsonEncode(jsonBody));
+    print("putResponse");
+    print(response.statusCode);
     //responseJson = returnResponse(response, status);
     if(response.statusCode==200){
-      responseJson = ApiResponse(Status.COMPLETED, responseJson, "");
+      responseJson = ApiResponse(Status.COMPLETED, responseJson, "",response.statusCode);
     }else{
-      responseJson = ApiResponse(Status.ERROR, responseJson, "");
+      responseJson = ApiResponse(Status.ERROR, responseJson, "",response.statusCode);
+    }
+    if(response.statusCode==401){
+      showErrorDialog(GlobalContextService.navigatorKey.currentContext);
     }
   } on SocketException {
-    responseJson = ApiResponse(Status.ERROR, responseJson, "No Internet Connection");
+    responseJson = ApiResponse(Status.ERROR, responseJson, "No Internet Connection",-1);
     //throw FetchDataException('No Internet Connection');
   }
   return responseJson;
@@ -81,6 +79,9 @@ class NetworkApiService extends BaseApiService {
       };
       final response =
           await http.get(Uri.parse(BaseApiService.baseUrl + url), headers: requestHeaders);
+      if(response.statusCode==401){
+        showErrorDialog(GlobalContextService.navigatorKey.currentContext);
+      }
       responseJson = returnResponse(response, status);
     } on SocketException {
       throw FetchDataException('No Internet Connection');
@@ -118,9 +119,12 @@ class NetworkApiService extends BaseApiService {
       print(BaseApiService.baseUrl + url);
       print(jsonEncode(jsonBody));
       print("postResponse");
+      if(response.statusCode==401){
+        showErrorDialog(GlobalContextService.navigatorKey.currentContext);
+      }
       responseJson = returnResponse(response, status);
     } on SocketException {
-      responseJson = ApiResponse(Status.ERROR, responseJson, "No Internet Connection");
+      responseJson = ApiResponse(Status.ERROR, responseJson, "No Internet Connection",-1);
       //throw FetchDataException('No Internet Connection');
     }
     return responseJson;
@@ -167,7 +171,7 @@ class NetworkApiService extends BaseApiService {
             .toString();
         break;
     }
-    ApiResponse apiResponse = ApiResponse(status, responseJson, errorMessage);
+    ApiResponse apiResponse = ApiResponse(status, responseJson, errorMessage,response.statusCode);
     return apiResponse;
   }
 }
@@ -176,8 +180,9 @@ class ApiResponse<T> {
   Status? status;
   T? data;
   String? message;
+  int? responseCode;
 
-  ApiResponse(this.status, this.data, this.message);
+  ApiResponse(this.status, this.data, this.message,this.responseCode);
 
   ApiResponse.loading() : status = Status.LOADING;
 

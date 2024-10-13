@@ -33,19 +33,19 @@ class WebviewWidgetState extends BasePageState<WebviewWidget>
     print("state:" + state.toString());
 
     if (state == AppLifecycleState.paused) {
-     // _pauseWebView();
+      pauseAudio();
     } else if (state == AppLifecycleState.resumed) {
-     // _resumeWebView();
+      playAudio();
     }
   }
-  void _pauseWebView() {
+  void pauseAudio() {
     if (controller != null) {
-      controller!.currentUrl().then((url) {
-        setState(() {
-          _currentUrl = url;
-          controller!.loadRequest(Uri.parse('about:blank'));
-        });
-      });
+      controller!.runJavaScript("pause();");
+    }
+  }
+  void playAudio() {
+    if (controller != null) {
+      controller!.runJavaScript("play();");
     }
   }
 
@@ -135,6 +135,7 @@ class WebviewWidgetState extends BasePageState<WebviewWidget>
   @override
   void dispose() {
     super.dispose();
+    pauseAudio();
     WidgetsBinding.instance!.removeObserver(this);
   }
   void showFeedbackDialog(){

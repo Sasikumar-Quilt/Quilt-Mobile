@@ -2,13 +2,14 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class DataBaseHelper {
-  static final _databaseName = "ApiRequestDatabase.db";
+  static final _databaseName = "Events.db";
   static final _databaseVersion = 1;
 
-  static final table = 'api_requests';
+  static final table = 'event_requests';
 
   static final columnId = '_id';
   static final columnJsonRequest = 'jsonRequest';
+  static final moodId = 'moodId';
 
   // Private constructor for singleton pattern
   DataBaseHelper._privateConstructor();
@@ -37,21 +38,22 @@ class DataBaseHelper {
   // SQL code to create the table
   Future _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE $table (
-        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
-        $columnJsonRequest TEXT NOT NULL UNIQUE
-      )
-    ''');
+  CREATE TABLE $table (
+    $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+    $moodId TEXT NOT NULL UNIQUE,
+    $columnJsonRequest TEXT NOT NULL
+  )
+''');
   }
 
   // Method to store API request
-  Future<int> storeApiRequest(String jsonRequest) async {
+  Future<int> storeApiRequest(String jsonRequest,String mId) async {
     Database db = await instance.database;
     try {
       return await db.insert(
         table,
-        {columnJsonRequest: jsonRequest},
-        conflictAlgorithm: ConflictAlgorithm.ignore, // Avoid duplicate requests
+        {columnJsonRequest: jsonRequest,moodId:mId},
+        conflictAlgorithm: ConflictAlgorithm.replace, // Avoid duplicate requests
       );
     } catch (e) {
       print("Request already exists");
@@ -67,16 +69,49 @@ class DataBaseHelper {
     // Convert List<Map<String, dynamic>> into List<ApiRequestModel>
     return List.generate(maps.length, (i) {
       return ApiRequestModel(
-        id: maps[i][columnId],
+        id: maps[i][columnId],  moodId: maps[i][moodId],
         jsonRequest: maps[i][columnJsonRequest],
       );
     });
   }
+  Future<List<ApiRequestModel>> getStoredRequestsByMoodId(String mId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      table,
+      where: '$moodId = ?',  // Filter by moodId
+      whereArgs: [mId],         // Use moodId as an argument
+    );
+    return List.generate(maps.length, (i) {
+      return ApiRequestModel(
+        id: maps[i][columnId],  moodId: maps[i][moodId],
+        jsonRequest: maps[i][columnJsonRequest],
+      );
+    });
+  }
+  Future<ApiRequestModel?> getLastStoredRequestByMoodId(String mId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      table,
+      where: '$moodId = ?',  // Filter by moodId
+      whereArgs: [mId],      // Use moodId as an argument
+      orderBy: '$columnId DESC', // Sort by id in descending order to get the latest record
+      limit: 1,              // Limit the result to only one record
+    );
 
+    if (maps.isNotEmpty) {
+      return ApiRequestModel(
+        id: maps[0][columnId],
+        moodId: maps[0][moodId],
+        jsonRequest: maps[0][columnJsonRequest],
+      );
+    } else {
+      return null; // Return null if no record matches
+    }
+  }
   // Method to delete a request by its ID
-  Future<void> deleteApiRequest(int id) async {
+  Future<void> deleteApiRequest(String id) async {
     Database db = await instance.database;
-    await db.delete(table, where: '$columnId = ?', whereArgs: [id]);
+    await db.delete(table, where: '$moodId = ?', whereArgs: [id]);
     print("Request with ID $id deleted");
   }
 
@@ -90,13 +125,15 @@ class DataBaseHelper {
 class ApiRequestModel {
   int id;
   String jsonRequest;
+  String moodId;
 
-  ApiRequestModel({required this.id, required this.jsonRequest});
+  ApiRequestModel({required this.id, required this.jsonRequest,required this.moodId});
 
   // Convert model to map for database
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      "moodId":moodId,
       'jsonRequest': jsonRequest,
     };
   }

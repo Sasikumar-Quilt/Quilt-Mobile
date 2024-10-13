@@ -47,6 +47,8 @@ class UserTrackingHelper {
   ApiHelper apiHelper = ApiHelper();
 
   void saveUserEntries(String interactionType, String contentId) {
+    print("saveUserEntries");
+    print(contentId);
     String eventType = "user_views";
     if (interactionType == "app_open" ||
         interactionType == "app_close" ||
@@ -57,8 +59,66 @@ class UserTrackingHelper {
         contentId: contentId,
         eventType: eventType,
         interactionType: interactionType,
-        timestamp: Utility.getDate(Constans.DATE_FORMAT_1));
-    eventList.add(event);
+        timestamp: Utility.getUtcDate(Constans.DATE_FORMAT_1));
+   // eventList.add(event);
+    String moodId=PreferenceUtils.getString(PreferenceUtils.MOODID, "");
+    if(Utility.isEmpty(moodId)){
+      moodId="empty";
+    }
+
+    dataBaseHelper?.getStoredRequestsByMoodId(moodId).then((value) => {
+      getRequestList(value,event,moodId)
+    });
+  }
+  void fetchLastEvent(){
+    String moodId=PreferenceUtils.getString(PreferenceUtils.MOODID, "");
+    dataBaseHelper?.getLastStoredRequestByMoodId(moodId).then((value) => {
+      saveAppCloseEvent(value)
+    });
+  }
+  void saveAppCloseEvent(ApiRequestModel? value){
+    if(value!=null){
+      List<Event>eventList=[];
+      eventList=jsonStringToEventList(value.jsonRequest);
+      if(eventList[eventList.length-1].interactionType=="app_minimise"){
+        Event event = new Event(
+            contentId: eventList[eventList.length-1].contentId,
+            eventType: eventList[eventList.length-1].eventType,
+            interactionType: "app_close",
+            timestamp:eventList[eventList.length-1].timestamp);
+        // eventList.add(event);
+        String moodId=PreferenceUtils.getString(PreferenceUtils.MOODID, "");
+        if(Utility.isEmpty(moodId)){
+          moodId="empty";
+        }
+        dataBaseHelper?.getStoredRequestsByMoodId(moodId).then((value) => {
+          getRequestList(value,event,moodId)
+        });
+      }
+    }
+  }
+  void getRequestList(List<ApiRequestModel> value,Event event,String moodId){
+    List<Event>eventList=[];
+    if(value.isNotEmpty){
+      List<ApiRequestModel> sList=value;
+      eventList=jsonStringToEventList(sList[0].jsonRequest);
+      eventList.add(event);
+    }else{
+      eventList.add(event);
+    }
+    print("insertEventData");
+    print(event.contentId);
+    print(event.interactionType);
+    print(eventListToJsonString(eventList));
+    dataBaseHelper
+        ?.storeApiRequest(eventListToJsonString(eventList),moodId);
+  }
+  String eventListToJsonString(List<Event> eventList) {
+    return jsonEncode(eventList.map((event) => event.toJson()).toList());
+  }
+  List<Event> jsonStringToEventList(String jsonString) {
+    List<dynamic> jsonList = jsonDecode(jsonString);
+    return jsonList.map((json) => Event.fromJson(json)).toList();
   }
 
   void checkExistUserEventRequest() async {
@@ -68,16 +128,43 @@ class UserTrackingHelper {
 
   }
   void uploadExistingData(List<ApiRequestModel>? list){
-    if (list!.isNotEmpty) {
-      for (int i = 0; i < list.length; i++) {
-        apiHelper.updateUserEvent(jsonDecode(list[i].jsonRequest)).then((value) => {
-          if (value.status == Status.COMPLETED)
-            {dataBaseHelper?.deleteApiRequest(list[i].id)}
-        });
-      }
+    if(list==null||list.isEmpty){
+      return;
     }
+    for (int i = 0; i < list.length; i++) {
+      DateTime dateTime = DateTime.now();
+      UserRequest userRequest = UserRequest(
+          userId: PreferenceUtils.getString(PreferenceUtils.USER_ID, ""),
+          appVersion: currentVersion,
+          timezone: dateTime.timeZoneName,
+          hashtagId: list[i].moodId.contains("#")?list[i].moodId:"",
+          moodId:list[i].moodId.contains("#")
+              ? ""
+              : list[i].moodId,
+          events: jsonStringToEventList(list[i].jsonRequest),
+          timestamp: Utility.getUtcDate(Constans.DATE_FORMAT_1));
+      var data=userRequest.toJson();
+      data.removeWhere((key, value) {
+        if (value == null) return true; // Remove null values
+        if (value is String && value.isEmpty) return true; // Remove empty strings
+        if (value is String && value == "empty") return true; // Remove values that are "empty"
+        if (value is List && value.isEmpty) return true; // Remove empty lists
+        if (value is Map && value.isEmpty) return true; // Remove empty maps
+        return false;
+      });
+      print("eventApiRequestTime");
+      print(DateTime.timestamp());
+      apiHelper.updateUserEvent(data).then((value) => {
+      print(DateTime.timestamp()),
+      print("eventApiResponseTime"),
+        if (value.status == Status.COMPLETED)
+          {dataBaseHelper?.deleteApiRequest(list[i].moodId)}
+      });
+    }
+
   }
 
+/*
   void sendUserTrackingRequest() async {
     if (eventList.isEmpty) return;
     DateTime dateTime = DateTime.now();
@@ -85,11 +172,12 @@ class UserTrackingHelper {
         userId: PreferenceUtils.getString(PreferenceUtils.USER_ID, ""),
         appVersion: currentVersion,
         timezone: dateTime.timeZoneName,
-        moodId: isHashTag
-            ? hashTag
+        hashtagId: isHashTag?hashTag:"",
+        moodId:isHashTag
+            ? ""
             : PreferenceUtils.getString(PreferenceUtils.MOODID, ""),
         events: eventList,
-        timeStamp: Utility.getDate(Constans.DATE_FORMAT_1));
+        timestamp: Utility.getUtcDate(Constans.DATE_FORMAT_1));
     var data=userRequest.toJson();
     data.removeWhere((key, value) {
       if (value == null) return true; // Remove null values
@@ -105,17 +193,17 @@ print(dataBaseHelper);
         ?.storeApiRequest(jsonString)
         .then((value) async => {sendApiRequest(data, value!)});
   }
+*/
 
-  void sendApiRequest(dynamic request, int id) async {
+  /*void sendApiRequest(dynamic request, int id) async {
     print(request);
     print("sendApiRequest");
     ApiResponse apiResponse;
     apiResponse = await apiHelper.updateUserEvent(request);
     if (apiResponse.status == Status.COMPLETED) {
-      eventList = [];
       dataBaseHelper?.deleteApiRequest(id);
     }
-  }
+  }*/
 }
 
 class UserRequest {
@@ -123,7 +211,8 @@ class UserRequest {
   final String appVersion;
   final String timezone;
   final String moodId;
-  final String timeStamp;
+  final String hashtagId;
+  final String timestamp;
   final List<Event> events;
 
   UserRequest(
@@ -131,8 +220,9 @@ class UserRequest {
       required this.appVersion,
       required this.timezone,
       required this.moodId,
+      required this.hashtagId,
       required this.events,
-      required this.timeStamp});
+      required this.timestamp});
 
   // Method to convert a UserRequest instance into a JSON map
   Map<String, dynamic> toJson() {
@@ -141,7 +231,8 @@ class UserRequest {
       'appVersion': appVersion,
       'timezone': timezone,
       'moodId': moodId,
-      'timeStamp': timeStamp,
+      'hashtagId': hashtagId,
+      'timestamp': timestamp,
       'events': events.map((event) => event.toJson()).toList(),
     };
   }
@@ -153,7 +244,8 @@ class UserRequest {
       appVersion: json['appVersion'],
       timezone: json['timezone'],
       moodId: json['moodId'],
-      timeStamp: json['timeStamp'],
+      hashtagId: json["hashtagId"],
+      timestamp: json['timestamp'],
       events: (json['events'] as List<dynamic>)
           .map((eventJson) => Event.fromJson(eventJson))
           .toList(),

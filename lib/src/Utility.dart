@@ -11,33 +11,18 @@ class Utility{
     List<Widget>? actions,
     Widget? title,
   }) async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return AlertDialog(
-          alignment: Alignment.center,
-          insetPadding: const EdgeInsets.all(16.0),
-          actionsPadding: const EdgeInsets.symmetric(
-            vertical: 8.0,
-            horizontal: 16.0,
-          ),
-          title: title,
-          content: SingleChildScrollView(
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width,
-              child: body,
-            ),
-          ),
-          actions: actions,
-        );
-      },
-    );
+
   }
   static String getDate(String format) {
     DateTime today = DateTime.now();
     var outputFormat = DateFormat(format);
     return outputFormat.format(today);
+  }
+  static String getUtcDate(String format) {
+    DateTime utcDateTime = DateTime.now().toUtc();
+
+    var outputFormat = DateFormat(format);
+    return outputFormat.format(utcDateTime);
   }
   static String formattedDate(String format,DateTime dateTime) {
     var outputFormat = DateFormat(format);

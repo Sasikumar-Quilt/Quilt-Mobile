@@ -130,6 +130,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   RemoteConfigService? remoteConfigService;
   UserTrackingHelper? userTrackingHelper;
   CollectionHelper? collectionHelper;
+  bool isAuthError=false;
   //double _sliderValue = 0;
   bool _isSliding = false;
   final ValueNotifier<double> _sliderValue = ValueNotifier<double>(0);
@@ -276,6 +277,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
     collectionHelper!.init();
     userTrackingHelper=UserTrackingHelper();
     userTrackingHelper!.init();
+    userTrackingHelper!.fetchLastEvent();
     userTrackingHelper!.saveUserEntries("app_open", "");
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -393,6 +395,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         print('${DateTime.now()} Event: $event');
       }
     });
+
     eventBus.on<NotificationEvent>().listen((event) {
       List<String> receivedList = event.id;
       print(receivedList.length);
@@ -454,22 +457,29 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
 
   @override
   void dispose() {
+    print("applicationKilled");
+
     super.dispose();
     audioManager?.dispose();
     _phoneStateSubscription?.cancel();
     preloadVideos.disposeAll();
     eventBus.dispose();
   }
-
+@override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
   @override
   void didUpdateWidget(covariant DashboardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     print(currentRouteName);
     print("didUpdateWidget");
+
     int currentTap = PreferenceUtils.getInt("currentTap", 0);
     if (currentRouteName == HomeWidgetRoutes.DashboardWidget ||
         currentRouteName == "/" ||
         currentRouteName == null) {
+
       PreferenceUtils.setBool("isFirstTime", false);
       collectionHelper!.getCollectionList();
       if (bIsPlay) {
@@ -478,8 +488,9 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
       }
     } else {
       if (timer != null ||
-          currentRouteName == HomeWidgetRoutes.FavoriteWidget) {
-        if (currentTap == 1 && !PreferenceUtils.getBool("isFirstTime")!) {
+          currentRouteName == HomeWidgetRoutes.FavoriteWidget||currentRouteName == HomeWidgetRoutes.profileScreen) {
+
+        if ((currentTap == 1||currentTap==2) && !PreferenceUtils.getBool("isFirstTime")!) {
           PreferenceUtils.setBool("isFirstTime", true);
           ScaffoldMessenger.of(context).removeCurrentSnackBar();
           bIsPlay = isPlay;
@@ -510,7 +521,6 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
 
       if (state == AppLifecycleState.paused) {
         userTrackingHelper!.saveUserEntries("app_minimise", "");
-        userTrackingHelper!.sendUserTrackingRequest();
         print("applicationPaused");
         print(currentRouteName);
         if ((currentRouteName == HomeWidgetRoutes.DashboardWidget ||
@@ -535,6 +545,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         }
       } else if (state == AppLifecycleState.resumed) {
         userTrackingHelper!.saveUserEntries("app_open", "");
+        userTrackingHelper!.checkExistUserEventRequest();
         print('app resumed');
         timer?.cancel();
         timer = null;
@@ -630,6 +641,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                             itemCount: contentList!.length,
                             onPageChanged: (index) async {
                               await pauseAudio();
+                              print("feed_exit");
                               userTrackingHelper!.saveUserEntries("feed_exit",
                                   contentList![pageCount].contentId!);
                               pageCount = index;
@@ -657,13 +669,18 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                               setState(() {});
                               preloadVideos.onPageChanged(index);
                               preloadImages.onPageChanged(index);
-                              userTrackingHelper!.saveUserEntries("feed_entry",
-                                  contentList![pageCount].contentId!);
+                              print(contentList![index].contentId!);
+                             Future.delayed(Duration(milliseconds: 100),(){
+                               userTrackingHelper!.saveUserEntries("feed_entry",
+                                   contentList![index].contentId!);
+                             });
+
                             },
                             scrollDirection: Axis.vertical,
                             itemBuilder: (context, index) {
                               if (index == contentList!.length - 2 &&
                                   hasMoreData) {
+                                hasMoreData=false;
                                 print("nextPage");
                                 getContentList(
                                     moodId, context); // Load more items
@@ -1708,44 +1725,13 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
     setState(() {});
   }
 
-  /*Future<void> createCollectionApi(String collectionName) async {
-    print("createCollectionApi");
-    print(DateTime.timestamp());
-    ApiResponse? apiResponse =
-        await apiHelper.createCollection(collectionName, "");
-    CreateCollectionObject collectionObject =
-        CreateCollectionObject.fromJson(apiResponse.data);
-    print("createCollectionApiResponse");
-    print(DateTime.timestamp());
-    if (collectionObject.collectionObject != null) {
-      if (collectionList.isEmpty) {
-        PreferenceUtils.setString(
-            "collectionID", collectionObject.collectionObject!.collectionId!);
-        PreferenceUtils.setString("collectionName",
-            collectionObject.collectionObject!.collectionName!);
-      } else {
-        if (collectionList
-            .where((element) =>
-                element.collectionId ==
-                PreferenceUtils.getString("collectionID", ""))
-            .toList()
-            .isEmpty) {
-          PreferenceUtils.setString(
-              "collectionID", collectionList[0].collectionId!);
-          PreferenceUtils.setString(
-              "collectionName", collectionList[0].collectionName!);
-        }
-      }
-      collectionList.add(collectionObject.collectionObject!);
-    }
-  }*/
-
   void getContentList(String id, ctx) async {
+    isAuthError=false;
     print(currentPage);
     print("getContentList");
-    if (moodId != id) {
-      userTrackingHelper!.sendUserTrackingRequest();
-    }
+    //if (moodId != id) {
+      userTrackingHelper!.checkExistUserEventRequest();
+    //}
     PreferenceUtils.setBool("is_surprise", isSurpriseMe);
     moodId = id;
     if (!isFromInitState) {
@@ -3129,22 +3115,25 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
             }
           else
             {
-              moods = [],
-              moods2 = [],
-              if (isPositiveEmotion)
-                {
-                  if (positiveMoods != null && positiveMoods!.isNotEmpty)
-                    {
-                      moods!.addAll(positiveMoods!),
-                      moods2!.addAll(positiveMoods2!)
-                    }
-                }
-              else
-                {
-                  if (dMoods != null && dMoods!.isNotEmpty)
-                    {moods!.addAll(dMoods!), moods2!.addAll(dMoods2!)}
-                },
-              _showEmotionModal()
+              if(!isAuthError){
+                moods = [],
+                moods2 = [],
+                if (isPositiveEmotion)
+                  {
+                    if (positiveMoods != null && positiveMoods!.isNotEmpty)
+                      {
+                        moods!.addAll(positiveMoods!),
+                        moods2!.addAll(positiveMoods2!)
+                      }
+                  }
+                else
+                  {
+                    if (dMoods != null && dMoods!.isNotEmpty)
+                      {moods!.addAll(dMoods!), moods2!.addAll(dMoods2!)}
+                  },
+                _showEmotionModal()
+              }
+
             }
         });
   }
@@ -3322,62 +3311,63 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   Widget _buildControls() {
     return Container(
       child: Align(
-        child: Container(
-          child:  SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              thumbShape: RoundSliderThumbShape(
-                  enabledThumbRadius: !_isSliding ? 0 : 5),
-              overlayShape:
-              RoundSliderOverlayShape(overlayRadius: 0),
-              trackHeight: 3,
-
-              trackShape: RectangularSliderTrackShape(),
-              thumbColor: Colors.white,
-              activeTrackColor: Colors.white,
-              inactiveTrackColor: Colors.white30,
-              overlayColor: Colors.white.withAlpha(32),
-            ),
-            child: ValueListenableBuilder<double>(
-              builder: (BuildContext context, double value, Widget? child) {
-                return Slider(
-                  min: 0,
-                  max: contentList![pageCount].totalDuration!=null?contentList![pageCount].totalDuration!.inSeconds.toDouble():200,
-                  value: contentList![pageCount].totalDuration!=null?_sliderValue.value:0,
-                  onChanged: (value) {
-                    print("seekChanged");
-                    print(value.toInt());
-                    //setState(() {
-                    _sliderValue.value = value;
-                    _isSliding =
-                    true; // Indicate that sliding has started.
-                    print(_isSliding);
-                    setState(() {
-
-                    });
-
-                    // });
-                  },
-                  onChangeEnd: (value) {
-                    print("onChangeEnd");
-                    print(value.toInt());
-                    final position = Duration(seconds: value.toInt());
-                    audioManager!.seek(position);
-                    setState(() {
+        child: Column(mainAxisSize: MainAxisSize.min,children: [
+          Container(
+            child:  SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                thumbShape: RoundSliderThumbShape(
+                    enabledThumbRadius: !_isSliding ? 0 : 5),
+                overlayShape:
+                RoundSliderOverlayShape(overlayRadius: 0),
+                trackHeight: 3,
+                trackShape: CustomRectangleTrackShape(),
+                thumbColor: Colors.white,
+                activeTrackColor: Colors.white,
+                inactiveTrackColor: Colors.white30,
+                overlayColor: Colors.white.withAlpha(32),
+              ),
+              child: ValueListenableBuilder<double>(
+                builder: (BuildContext context, double value, Widget? child) {
+                  return Slider(
+                    min: 0,
+                    max: contentList![pageCount].totalDuration!=null?contentList![pageCount].totalDuration!.inSeconds.toDouble():200,
+                    value: contentList![pageCount].totalDuration!=null?_sliderValue.value:0,
+                    onChanged: (value) {
+                      print("seekChanged");
+                      print(value.toInt());
+                      //setState(() {
+                      _sliderValue.value = value;
                       _isSliding =
-                      false; // Indicate that sliding has ended.
+                      true; // Indicate that sliding has started.
                       print(_isSliding);
-                    });
+                      setState(() {
 
-                  },
-                );
-              },
-              valueListenable: _sliderValue,
+                      });
+
+                      // });
+                    },
+                    onChangeEnd: (value) {
+                      print("onChangeEnd");
+                      print(value.toInt());
+                      final position = Duration(seconds: value.toInt());
+                      audioManager!.seek(position);
+                      setState(() {
+                        _isSliding =
+                        false; // Indicate that sliding has ended.
+                        print(_isSliding);
+                      });
+
+                    },
+                  );
+                },
+                valueListenable: _sliderValue,
+              ),
             ),
-          ),
-          margin: EdgeInsets.only(left: 0, right: 0),
-          height: 7,
-          alignment: Alignment.bottomCenter,
-        ),
+            margin: EdgeInsets.only(left: 0, right: 0),
+            height: 18,
+            alignment: Alignment.bottomCenter,
+          )
+        ],),
         alignment: Alignment.bottomCenter,
       ),
     );

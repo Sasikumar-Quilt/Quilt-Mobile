@@ -8,16 +8,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/services.dart';
+import 'package:quilt/src/Analytics/UserTrackingHelper.dart';
 import 'package:quilt/src/Assessment/AssessmentListWidget.dart';
 import 'package:quilt/src/Assessment/AssessmentWidget.dart';
 import 'package:quilt/src/DashbaordWidget.dart';
 import 'package:quilt/src/PushNotificationService.dart';
 import 'package:quilt/src/SliderWidget.dart';
 import 'package:quilt/src/WebViewWidget.dart';
+import 'package:quilt/src/auth/EditProfileWidget.dart';
 import 'package:quilt/src/auth/OTPWidget.dart';
 import 'package:quilt/src/auth/CreateProfileWidget.dart';
 import 'package:quilt/src/auth/ProfileWidget.dart';
 import 'package:quilt/src/base/AppEnvironment.dart';
+import 'package:quilt/src/dialog/GlobalContextService.dart';
 import 'package:quilt/src/emi/EMIWidget.dart';
 import 'package:quilt/src/favorite/FavoriteListWidget.dart';
 import 'package:quilt/src/favorite/FavoriteWidget.dart';
@@ -40,11 +43,12 @@ const splashTextColor=Color(0xFF2E292C);
 const greyColor=Color(0xFFA0949D);
 
 final routes = <String, Widget>{
-  HomeWidgetRoutes.SplashScreen:DashboardWidget(),
+  HomeWidgetRoutes.SplashScreen:SplashWidget(),
   HomeWidgetRoutes.EnterPasswordWidget:OTPWidget(),
   HomeWidgetRoutes.slideScreen:SliderPage(),
   HomeWidgetRoutes.webScreenScreen:WebviewWidget(),
-  HomeWidgetRoutes.profileScreen:ProfileScreen(),
+  HomeWidgetRoutes.profileScreen:ProfileWidget(),
+  HomeWidgetRoutes.EditProfileWidget:EditProfileWidget(),
   HomeWidgetRoutes.EnterUserNameWidget:CreateProfileWidget(),
   HomeWidgetRoutes.DashboardWidget:MainContainerWidget(),
   HomeWidgetRoutes.VideoplayerWidget:VideoplayerWidget(),
@@ -61,6 +65,7 @@ final routes = <String, Widget>{
   HomeWidgetRoutes.AssessmentListWidget:AssessmentListWidget(),
   HomeWidgetRoutes.TCWebView:TCWebView(),
 };
+
 class HomeWidgetRoutes{
   static const SplashScreen = "SplashScreen";
   static const OtpScreen = "otpScreen";
@@ -72,6 +77,7 @@ class HomeWidgetRoutes{
   static const slideScreen = "slideScreen";
   static const webScreenScreen = "webViewScreen";
   static const profileScreen = "profileScreen";
+  static const EditProfileWidget = "EditProfileWidget";
   static const editProfile = "editProfile";
   static const EnterAgeWidget = "EnterAgeWidget";
   static const GenderWidget = "GenderWidget";
@@ -95,7 +101,7 @@ IEventBus eventBus = EventBus();
 void main() async{
   print(appFlavor);
   print("flavor");
-  AppEnvironment.setupEnv(appFlavor);
+  AppEnvironment.setupEnv("Staging");
   await FastCachedImageConfig.init(clearCacheAfter: const Duration(days: 15));
   WidgetsFlutterBinding.ensureInitialized();
   PushNotificationService.initialize();
@@ -117,10 +123,16 @@ class App extends StatefulWidget{
 }
 
 class MyApp extends State<App> {
+  UserTrackingHelper? userTrackingHelper;
 @override
   void initState() {
     super.initState();
-
+    userTrackingHelper=UserTrackingHelper();
+  }
+  @override
+  void dispose() {
+    print("applicationKilled");
+    super.dispose();
   }
   // This widget is the root of your application.
   @override
@@ -132,8 +144,7 @@ class MyApp extends State<App> {
         theme: ThemeData(
           primaryColor: Colors.white,
         ),
-        home: SplashWidget(),
-        onGenerateRoute: onGenerateRoute,navigatorObservers:[routeObserver]
+        home: SplashWidget(),navigatorKey: GlobalContextService.navigatorKey,onGenerateRoute: onGenerateRoute,navigatorObservers: [routeObserver],
     );
   }
 

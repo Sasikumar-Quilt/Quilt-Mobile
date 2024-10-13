@@ -60,6 +60,32 @@ class CollectionHelper{
     }
     return collectionList;
   }
+  void resetCollectionCount(){
+    for(int i=0;i<collectionList.length;i++){
+      collectionList[i].collectionCount="0";
+    }
+  }
+  void updateCollectionCount(List<FavoriteListObject>favLists){
+    for(int i=0;i<favLists.length;i++){
+      int index=collectionList.indexWhere((element) => element.collectionId==favLists[i].collectionId);
+      if(favLists[i].contentList!=null){
+        int count=favLists[i].contentList!.length;
+        collectionList[index].collectionCount=count.toString();
+      }
+    }
+
+  }
+  void updateCollectionCountById(String collectionId,bool isAdd){
+    int index=collectionList.indexWhere((element) => element.collectionId==collectionId);
+    int count=int.parse(collectionList[index].collectionCount);
+    if(isAdd){
+      count=count+1;
+    }else{
+      count=count-1;
+    }
+    collectionList[index].collectionCount=count.toString();
+
+  }
   Future<void> createCollectionApi(String collectionName) async {
     print("createCollectionApi");
     print(DateTime.timestamp());

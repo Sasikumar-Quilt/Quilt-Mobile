@@ -181,7 +181,7 @@ class JournalWidgetState extends State<JournalWidget>
       isArg = true;
       final args = ModalRoute.of(context)?.settings.arguments as Map;
       contentObj = args["url"];
-      isMute = args["isMute"];
+      isMute = args["isMute"]??false;
       isJournalMute =isMute;
       if(args["index"]!=null){
         int index = args["index"];
@@ -224,7 +224,7 @@ class JournalWidgetState extends State<JournalWidget>
   }
 
   replayVideo(value) {
-    if (value != null && value["isReplay"]) {
+    if (value != null && value["isReplay"]!=null&& value["isReplay"]) {
       Navigator.of(context).pop();
     } else {
       videoPlayerController?.play();
