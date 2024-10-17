@@ -59,7 +59,7 @@ dependencies:
   wakelock_plus: ^1.2.5
   is_lock_screen2: ^2.0.1
   flutter_quill: ^9.3.11
-  quill_html_converter: ^9.3.16
+  vsc_quill_delta_to_html: 1.0.5
   audioplayers: ^6.1.0
   fluttertoast: ^8.2.6
   cached_network_image: ^3.3.1
