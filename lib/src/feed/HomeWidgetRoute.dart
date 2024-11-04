@@ -17,6 +17,7 @@ Color appColorGrey = Colors.grey[600]!;
 Color selectedTabColor = Color(0xff192c96);
 
 bool? isShowBottom = true;
+bool isLogout = false;
 String currentRouteName = HomeWidgetRoutes.DashboardWidget;
 
 class _HomeWidgetStateProvider extends InheritedWidget {
@@ -82,8 +83,16 @@ class HomeWidgetState extends State<MainContainerWidget>
   @override
   void initState() {
     super.initState();
+    isLogout=false;
     print("dashboardInitial");
     print(_currentIndex);
+    eventBus.on<ClickEvent>().listen((event) {
+      isShowBottom=true;
+      _currentIndex=0;
+      setState(() {
+
+      });
+    });
   }
 
   void updateRouteName() {
@@ -408,10 +417,14 @@ class HomeWidgetState extends State<MainContainerWidget>
     if (routeName == HomeWidgetRoutes.FavoriteWidget ||
         routeName == HomeWidgetRoutes.profileScreen ||
         routeName == HomeWidgetRoutes.DashboardWidget ||
-        routeName == null) {
+        routeName == null||routeName == "/") {
       isShowBottom = true;
     } else {
       isShowBottom = false;
+    }
+    if(routeName == HomeWidgetRoutes.DashboardWidget){
+      _currentIndex=0;
+      PreferenceUtils.setInt("currentTap", _currentIndex);
     }
     setState(() {
       currentRouteName = routeName!;
@@ -457,7 +470,6 @@ class HomeObserver extends RouteObserver<PageRoute<dynamic>> {
       currentRouteName = routeName == null ? "/" : routeName!;
       updateRoutes(isShowBottom, currentRouteName);
     }
-
     super.didPop(route, previousRoute);
   }
 

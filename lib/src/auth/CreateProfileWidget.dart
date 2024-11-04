@@ -17,6 +17,7 @@ import 'package:quilt/src/base/BaseState.dart';
 import '../PrefUtils.dart';
 import '../api/ApiHelper.dart';
 import '../api/Objects.dart';
+import '../feed/HomeWidgetRoute.dart';
 
 class CreateProfileWidget extends BasePage {
   @override
@@ -982,8 +983,16 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
                 }),
           );
         }).then((value) => {
-          Navigator.pushNamedAndRemoveUntil(
-              context, HomeWidgetRoutes.DashboardWidget, (route) => false)
+    if(isLogout){
+      isLogout=false,
+        eventBus.fire(ClickEvent([])),
+        Navigator.pushNamedAndRemoveUntil(
+        context, "/", (route) => false)
+    }else{
+      Navigator.pushNamedAndRemoveUntil(
+          context, HomeWidgetRoutes.Home, (route) => false)
+    }
+
         });
   }
 

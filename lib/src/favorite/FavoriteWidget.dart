@@ -23,7 +23,7 @@ class FavoriteWidget extends StatefulWidget{
 class FavoriteState extends State<FavoriteWidget>{
   bool isEmpty=false;
   ApiHelper apiHelper = ApiHelper();
-List<FavoriteListObject>favLists=[];
+List<CollectionContentCountObject>favLists=[];
 bool isApiContentLoading=true;
 bool isApiCalling=false;
 CollectionHelper collectionHelper=new CollectionHelper();
@@ -32,6 +32,9 @@ CollectionHelper collectionHelper=new CollectionHelper();
     super.initState();
     isActionUpdate=false;
     print("initFav");
+    if(collectionHelper.favLists.isNotEmpty){
+      favLists=collectionHelper.favLists;
+    }
     Future.delayed(Duration.zero,(){
      getFavListApi(null);
     });
@@ -39,17 +42,19 @@ CollectionHelper collectionHelper=new CollectionHelper();
   Future<void> getFavListApi(value) async {
     if(isActionUpdate){
       isApiCalling=true;
-      setState(() {
-      });
+     if(mounted){
+       setState(() {
+       });
+     }
     }
     ApiResponse? apiResponse=null;
     collectionHelper.resetCollectionCount();
-    apiResponse = await apiHelper.getFavList();
+    apiResponse = await apiHelper.getCollectionWithContentCount();
     if (apiResponse.status == Status.COMPLETED) {
-      FavoriteList cList = FavoriteList.fromJson(apiResponse.data);
-      if (cList.favList != null && cList.favList!.isNotEmpty) {
+      CollectionContentCountList cList = CollectionContentCountList.fromJson(apiResponse.data);
+      if (cList.collectionList != null && cList.collectionList!.isNotEmpty) {
         favLists=[];
-        favLists.addAll(cList.favList!);
+        favLists.addAll(cList.collectionList!);
         print("favList");
         print(favLists.length);
         collectionHelper.updateCollectionCount(favLists);
@@ -59,9 +64,11 @@ CollectionHelper collectionHelper=new CollectionHelper();
     }
     isApiContentLoading=false;
     isApiCalling=false;
-    setState(() {
+   if(mounted){
+     setState(() {
 
-    });
+     });
+   }
   }
 
   @override
@@ -114,10 +121,10 @@ CollectionHelper collectionHelper=new CollectionHelper();
               Expanded(child:  Container(decoration: BoxDecoration(color: Color(0xff272727),border: Border.all(color: Color(0xff3D3D3D)),borderRadius: BorderRadius.circular(15)),child:
               getListWidgets(favLists[index]),padding: EdgeInsets.only(right: 7,left: 7,top: 7,bottom: 7),)),
               Container(child:  Text(
-                favLists[index].collectionName[0].toUpperCase() + favLists[index].collectionName.substring(1),
+                favLists[index].collectionName![0].toUpperCase() + favLists[index].collectionName!.substring(1),
                 style: TextStyle(fontSize: 16.0, fontFamily: "Causten-Medium",color: Colors.white),
               ),margin: EdgeInsets.only(top: 10),),
-              Container(child:  Text((favLists[index].contentList!.length.toString() +' experiences') as String,  style: TextStyle(fontSize: 12.0, fontFamily: "Causten-Regular",color: Color(0xff5D5D5D)),),margin: EdgeInsets.only(top: 2),),
+              Container(child:  Text((favLists[index].collectionCount +' experiences') as String,  style: TextStyle(fontSize: 12.0, fontFamily: "Causten-Regular",color: Color(0xff5D5D5D)),),margin: EdgeInsets.only(top: 2),),
             ],),);
           },
         ),):Container()
@@ -148,21 +155,21 @@ CollectionHelper collectionHelper=new CollectionHelper();
       )
     ] ,),));
   }
-  Widget getListWidgets(FavoriteListObject favoriteListObject){
-    if(favoriteListObject.contentList!.length>3){
+  Widget getListWidgets(CollectionContentCountObject favoriteListObject){
+    if(int.parse(favoriteListObject.collectionCount)>3){
       return getListWidget(favoriteListObject);
-    }else  if(favoriteListObject.contentList!.length==2){
+    }else  if(int.parse(favoriteListObject.collectionCount)==2){
       return getListTwoWidget(favoriteListObject);
-    }else  if(favoriteListObject.contentList!.length==1){
+    }else  if(int.parse(favoriteListObject.collectionCount)==1){
       return getListOneWidget(favoriteListObject);
-    }else  if(favoriteListObject.contentList!.length==3){
+    }else  if(int.parse(favoriteListObject.collectionCount)==3){
       return getThreeListWidget(favoriteListObject);
     }else{
       return getEmptyWidget(favoriteListObject);
     }
 
   }
-  Widget getListTwoWidget(FavoriteListObject favoriteListObject){
+  Widget getListTwoWidget(CollectionContentCountObject favoriteListObject){
     return InkWell(child: Container(child: Row(children: [
       Expanded(child: Container(height: double.infinity,padding: EdgeInsets.only(left: 0,top: 0,right: 3,bottom: 0),child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -192,7 +199,7 @@ CollectionHelper collectionHelper=new CollectionHelper();
       });
     },);
   }
-  Widget getListOneWidget(FavoriteListObject favoriteListObject){
+  Widget getListOneWidget(CollectionContentCountObject favoriteListObject){
     return InkWell(child: Container(child: Row(children: [
       Expanded(child: Container(height: double.infinity,padding: EdgeInsets.only(left: 0,top: 0,right: 3,bottom: 0),child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -213,10 +220,10 @@ CollectionHelper collectionHelper=new CollectionHelper();
       });
     },);
   }
-  Widget getEmptyWidget(FavoriteListObject favoriteListObject){
+  Widget getEmptyWidget(CollectionContentCountObject favoriteListObject){
     return Container(child: SvgPicture.asset("assets/images/logo1.svg",height: 50,width: 50,  fit: BoxFit.scaleDown),width: double.infinity,);
   }
-  Widget getThreeListWidget(FavoriteListObject favoriteListObject){
+  Widget getThreeListWidget(CollectionContentCountObject favoriteListObject){
     return InkWell(child: Container(child: Row(children: [
       Expanded(child: Column(children: [
         Expanded(child: Container(padding: EdgeInsets.only(left: 0,top: 0,right: 2,bottom: 2),child: ClipRRect(
@@ -255,7 +262,7 @@ CollectionHelper collectionHelper=new CollectionHelper();
       });
     },);
   }
-  Widget getListWidget(FavoriteListObject favoriteListObject){
+  Widget getListWidget(CollectionContentCountObject favoriteListObject){
     return InkWell(child: Container(child: Row(children: [
       Expanded(child: Column(children: [
         Expanded(child: Container(padding: EdgeInsets.only(left: 0,top: 0,right: 2,bottom: 2),child: ClipRRect(

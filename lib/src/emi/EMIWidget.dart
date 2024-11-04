@@ -166,6 +166,7 @@ class EMIWidgetState extends State<EMIWidget> with WidgetsBindingObserver {
         preloadVideos.playControllerAtIndex(index);
         videoPlayerController=preloadVideos.controllers[index]??null;
         if(videoPlayerController!=null){
+          isDestroy=false;
           videoPlayerController?.play();
         }else{
           videoPlayerController = new VideoPlayerController.networkUrl(
@@ -178,8 +179,9 @@ class EMIWidgetState extends State<EMIWidget> with WidgetsBindingObserver {
 
             setState(() {});
           });
+          isDestroy=true;
         }
-        isDestroy=false;
+
       }else{
         videoPlayerController = new VideoPlayerController.networkUrl(
             Uri.parse(contentObj!.videoURL),

@@ -23,10 +23,12 @@ class Constans {
   static const favourite = "game/game-favourite";
   static const createCollection = "mobile-favourites/add-or-update-collections";
   static const favouritesUpdate = "mobile-favourites/add-or-update-favourite";
+  static const logout = "auth/logout";
   static const overallFeedback =
       "mobile-feedback/save-overall-feedback-results";
-  static const getFavorites = "mobile-favourites/favourites?userId=";
+  static const getFavorites = "mobile-favourites/favourites/contents?userId=";
   static const getCollection = "mobile-favourites/collections?userId=";
+  static const getCollectionWithContentCount = "mobile-favourites/favourites/collections?userId=";
   static const updateAssessment = "survey/save-survey-results";
   static const updateFeedbackSurvey = "feedback/save-feedback-results";
   static const getAssessmentList = "feedback/feedback-questions?feedbackId=";

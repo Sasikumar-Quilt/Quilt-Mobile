@@ -140,6 +140,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   @override
   void initState() {
     super.initState();
+    isLogout=false;
     if (Platform.isAndroid) {
       getNotificationDetails();
     } else {
@@ -278,7 +279,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
     userTrackingHelper=UserTrackingHelper();
     userTrackingHelper!.init();
     userTrackingHelper!.fetchLastEvent();
-    userTrackingHelper!.saveUserEntries("app_open", "");
+
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light));
@@ -458,12 +459,13 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
   @override
   void dispose() {
     print("applicationKilled");
-
     super.dispose();
-    audioManager?.dispose();
+    if(!isLogout){
+      audioManager?.dispose();
+      eventBus.dispose();
+    }
     _phoneStateSubscription?.cancel();
     preloadVideos.disposeAll();
-    eventBus.dispose();
   }
 @override
   void didChangeDependencies() {
@@ -514,14 +516,25 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if(Utility.isEmpty(PreferenceUtils.getString(PreferenceUtils.SESSION_TOKEN, ""))){
+      return;
+    }
+    if(state==AppLifecycleState.paused){
+      userTrackingHelper!.saveUserEntries("app_minimise", "");
+      print("applicationPaused");
+    }  else if (state == AppLifecycleState.resumed) {
+      print('app resumed');
+      userTrackingHelper!.saveUserEntries("app_open", "",isUpload: true);
+     // userTrackingHelper!.checkExistUserEventRequest();
+    }
+
     if (currentRouteName == HomeWidgetRoutes.DashboardWidget ||
         currentRouteName == "/" ||
         currentRouteName == null) {
       int currentTap = PreferenceUtils.getInt("currentTap", 0);
 
       if (state == AppLifecycleState.paused) {
-        userTrackingHelper!.saveUserEntries("app_minimise", "");
-        print("applicationPaused");
+
         print(currentRouteName);
         if ((currentRouteName == HomeWidgetRoutes.DashboardWidget ||
                 currentRouteName == "/" ||
@@ -544,9 +557,8 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
           }
         }
       } else if (state == AppLifecycleState.resumed) {
-        userTrackingHelper!.saveUserEntries("app_open", "");
-        userTrackingHelper!.checkExistUserEventRequest();
-        print('app resumed');
+
+
         timer?.cancel();
         timer = null;
         print(isNeedPrompt);
@@ -1730,12 +1742,13 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
     print(currentPage);
     print("getContentList");
     //if (moodId != id) {
-      userTrackingHelper!.checkExistUserEventRequest();
+
     //}
     PreferenceUtils.setBool("is_surprise", isSurpriseMe);
     moodId = id;
     if (!isFromInitState) {
-      isContentListApiRunning = true;
+       userTrackingHelper!.checkExistUserEventRequest();
+       isContentListApiRunning = true;
     }
     if (!moodId.contains("#")) {
       isHasTag = false;
@@ -1772,7 +1785,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         currentPage++; // Prepare for next page request
         if (contentList!.length <= 10 && _pageController!.hasClients) {
           userTrackingHelper!
-              .saveUserEntries("feed_entry", contentList![0].contentId!);
+              .saveUserEntries("feed_entry", contentList![0].contentId??"");
           if (isClosedBottomSheet) {
             isPlay = true;
           } else {
@@ -1791,7 +1804,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
         } else {
           if (contentList!.length <= 10) {
             userTrackingHelper!
-                .saveUserEntries("feed_entry", contentList![0].contentId!);
+                .saveUserEntries("feed_entry", contentList![0].contentId??"");
             print("isClosedBottomSheet");
             print(isClosedBottomSheet);
             if (isClosedBottomSheet) {

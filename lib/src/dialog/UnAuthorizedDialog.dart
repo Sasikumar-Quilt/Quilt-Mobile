@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:quilt/src/database/DatabaseHelper.dart';
 
 import '../../main.dart';
 import '../PrefUtils.dart';
@@ -52,6 +53,8 @@ void showErrorDialog(BuildContext? context) {
                 ),
                 GestureDetector(
                   onTapDown: (dertails) {
+                    DataBaseHelper dataBaseHelper=DataBaseHelper.instance;
+                    dataBaseHelper.deleteAllRequests();
                     _googleSignIn?.signOut();
                     PreferenceUtils.clear();
                     Navigator.of(context).pop();

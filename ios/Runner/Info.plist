@@ -39,6 +39,10 @@
 	<string>930588986366-0adio0ec0gma2n63rtfj1b25lsfat5je.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Our app needs access to your camera to let you upload a profile picture. This helps personalize your profile for a better experience.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Our app needs access to your photo library to let you upload a profile picture. This helps personalize your profile for a better experience.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>

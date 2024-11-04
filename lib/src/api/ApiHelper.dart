@@ -119,14 +119,20 @@ class ApiHelper {
     await baseApiService.getResponse(request, Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
-  Future<ApiResponse> getFavList() async {
-    String request=Constans.getFavorites+PreferenceUtils.getString(PreferenceUtils.USER_ID, "");
+  Future<ApiResponse> getFavList(int currentSize,String collectionId) async {
+    String request=Constans.getFavorites+PreferenceUtils.getString(PreferenceUtils.USER_ID, "")+"&page=$currentSize&limit=10"+"&collectionId="+collectionId;
 
     ApiResponse response =
     await baseApiService.getResponse(request, Status.MOBILE_NUMBER_LOGIN);
     return response;
   }
+  Future<ApiResponse> getCollectionWithContentCount() async {
+    String request=Constans.getCollectionWithContentCount+PreferenceUtils.getString(PreferenceUtils.USER_ID, "");
 
+    ApiResponse response =
+    await baseApiService.getResponse(request, Status.MOBILE_NUMBER_LOGIN);
+    return response;
+  }
   Future<ApiResponse> getContentListWithMoodName(String id,int currentSize) async {
     ApiResponse response =
     await baseApiService.getResponse(Constans.getContentList+PreferenceUtils.getString(PreferenceUtils.USER_ID, "")+"&moodName="+id+"&page=$currentSize&pageSize=10", Status.MOBILE_NUMBER_LOGIN);
@@ -145,6 +151,16 @@ class ApiHelper {
   Future<ApiResponse> deleteCollection(String id) async {
     ApiResponse response =
     await baseApiService.deleteResponse(Constans.getCollection+PreferenceUtils.getString(PreferenceUtils.USER_ID, "")+"&collectionId="+id, Status.MOBILE_NUMBER_LOGIN);
+    return response;
+  }
+  Future<ApiResponse> logout() async {
+    var request;
+    request = {
+      "appSessionId": PreferenceUtils.getString(PreferenceUtils.APPSESSIONID, ""),
+    };
+
+    ApiResponse response =
+    await baseApiService.postResponse(Constans.logout,request, Status.METRIC_DATA);
     return response;
   }
   Future<ApiResponse> updateFavorite(String id,String collectionId,bool isFavorite) async {

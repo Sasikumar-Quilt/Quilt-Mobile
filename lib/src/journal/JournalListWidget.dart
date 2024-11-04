@@ -5,7 +5,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:quilt/src/Utility.dart';
 import 'package:quilt/src/api/Objects.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:vsc_quill_delta_to_html/vsc_quill_delta_to_html.dart';
 
 import '../../main.dart';
@@ -90,30 +89,6 @@ class JournalListWidgetState extends State<JournalListWidget> {
     }
   }
 
-  //TODO: TO be used incase of future we try to show the actual HTML.
-  String getHtmlFromString(String htmlText) {
- 
-  List<Map<String, dynamic>> deltaOps = (jsonDecode(htmlText) as List)
-      .map((item) => item as Map<String, dynamic>)
-      .toList();
-
-  deltaOps = deltaOps.map((op) {
-    if (op.containsKey('attributes') && op['attributes'].containsKey('color')) {
-      String color = op['attributes']['color'];
-      if (color.length == 9) { 
-        op['attributes']['color'] = color.substring(3); 
-      }
-    }
-    return op;
-  }).toList();
-
-  final converter = QuillDeltaToHtmlConverter(
-    deltaOps,
-    ConverterOptions(),
-  );
-  final html = converter.convert();
-  return html;
-}
 
 String getPlainTextFromString(String htmlText) {
   // Step 1: Parse the JSON into a List of Map<String, dynamic>
@@ -370,35 +345,4 @@ String getPlainTextFromString(String htmlText) {
   }
 }
 
-class ShimmerList extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
-      child: ListView.builder(
-        itemCount: 5, // Adjust the count based on your needs
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Container(
-              height: 20,
-              width: 200,
-              color: Colors.white,
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
 
-class HtmlUnescape {
-  String convert(String text) {
-    return text
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&apos;', "'");
-  }
-}

@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:quilt/src/favorite/ChangeFavoriteCollectionDialog.dart';
 import 'package:quilt/src/favorite/CollectionHelper.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../main.dart';
 import '../Analytics/UserTrackingHelper.dart';
@@ -28,26 +29,50 @@ class FavoriteState extends State<FavoriteListWidget> {
   ApiHelper apiHelper = ApiHelper();
   CollectionHelper collectionHelper = CollectionHelper();
   List<ContentObj> contentList = [];
-  FavoriteListObject? favoriteListObject;
+  CollectionContentCountObject? favoriteListObject;
   bool isNewCollection = false;
   bool isEnable = false;
   TextEditingController mobileNumberCntrl = new TextEditingController();
   bool isApiCalling = false;
   UserTrackingHelper? userTrackingHelper;
-
+  bool isApiContentLoading=true;
+  int pageCount = 1;
+  bool hasMoreData=false;
   @override
   void initState() {
     super.initState();
     isActionUpdate=false;
     userTrackingHelper = UserTrackingHelper();
-  }
 
+  }
+  Future<void> getFavListApi() async {
+    ApiResponse? apiResponse=null;
+    apiResponse = await apiHelper.getFavList(pageCount,favoriteListObject!.collectionId!);
+    if (apiResponse.status == Status.COMPLETED) {
+      FavoriteList cList = FavoriteList.fromJson(apiResponse.data);
+      if (cList.favList != null&&cList.favList!.isNotEmpty) {
+        hasMoreData=true;
+        pageCount++;
+        contentList.addAll(cList.favList![0].contentList!);
+        print("favList");
+        print(cList.favList!.length);
+      }
+    }
+    isApiContentLoading=false;
+    isApiCalling=false;
+    if(mounted){
+      setState(() {
+
+      });
+    }
+  }
   getArgs() {
     if (!isArg) {
       isArg = true;
       final args = ModalRoute.of(context)?.settings.arguments as Map;
       favoriteListObject = args["object"];
-      contentList.addAll(favoriteListObject!.contentList!);
+      getFavListApi();
+     // contentList.addAll(favoriteListObject!.contentList!);
     }
   }
 
@@ -60,7 +85,7 @@ class FavoriteState extends State<FavoriteListWidget> {
         centerTitle: true,
         backgroundColor: Colors.black,
         title: Text(
-          favoriteListObject!.collectionName,
+          favoriteListObject!.collectionName![0].toUpperCase() + favoriteListObject!.collectionName!.substring(1),
           style: TextStyle(
               fontFamily: "Causten-Medium", fontSize: 18, color: Colors.white),
         ),
@@ -90,7 +115,42 @@ class FavoriteState extends State<FavoriteListWidget> {
         ],
       ),
       backgroundColor: Colors.black,
-      body: Container(
+      body: isApiContentLoading? Container(height: 100,child: Shimmer.fromColors(highlightColor: Colors.white,enabled: true,baseColor: Color(0xF8F7F8)
+          .withOpacity(0.2),child: Container(
+        margin: EdgeInsets.only(left: 15,top: 20, bottom: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                  color: Color(0xff272727),
+                  border: Border.all(color: Color(0xff3D3D3D)),
+                  borderRadius: BorderRadius.circular(15)),
+              child: Container(),
+              padding: EdgeInsets.only(
+                  right: 7, left: 7, top: 7, bottom: 7),
+              height: 55,
+              width: 55,
+            ),
+            Expanded(
+                child: Container(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(width: 150,color: Color(0xF8F7F8).withOpacity(0.2),
+                        margin: EdgeInsets.only(top: 0),child: Text(""),
+                      ),
+                      Container(color: Color(0xF8F7F8).withOpacity(0.2),
+                          margin: EdgeInsets.only(top: 7),width: 100,child: Text(""),
+                      ),
+                    ],
+                  ),
+                  margin: EdgeInsets.only(left: 12),
+                )),
+          ],
+        ),
+      ),),):Container(
           child: Container(
         height: double.infinity,
         child: Stack(
@@ -101,6 +161,12 @@ class FavoriteState extends State<FavoriteListWidget> {
               shrinkWrap: true,
               itemCount: contentList.length,
               itemBuilder: (context, int index) {
+                if (index == contentList!.length - 2 &&
+                    hasMoreData) {
+                  hasMoreData=false;
+                  print("nextPage");
+                  getFavListApi(); // Load more items
+                }
                 return InkWell(
                   child: Container(
                     margin: EdgeInsets.only(top: 10, bottom: 10),
@@ -122,7 +188,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                         Expanded(
                             child: Container(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
                                 child: Text(
@@ -178,7 +244,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                             alignment: Alignment.center,
                           ),
                           onTap: () {
-                            showFavModelSheet(context,favoriteListObject!.collectionId,contentList![index].id!,index);
+                            showFavModelSheet(context,favoriteListObject!.collectionId!,contentList![index].id!,index);
                           /*  updateFavorite(contentList![index].id!,
                                 favoriteListObject!.collectionId, index);*/
                           },
@@ -192,7 +258,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                     print(contentList![index].audioURL);
                     print(contentList![index].videoURL);
                     userTrackingHelper!.saveUserEntries(
-                        "content_entry", contentList![index].contentId!);
+                        "content_entry", contentList![index].contentId!,isFav: true,collectionId: favoriteListObject!.collectionId!);
 
                     if (contentList![index].contentType == "JOURNAL") {
                       print(contentList![index].contentUrl!);
@@ -201,7 +267,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                         "url": contentList![index]
                       }).then((value) => {
                             userTrackingHelper!.saveUserEntries(
-                                "content_exit", contentList![index].contentId!)
+                                "content_exit", contentList![index].contentId!,isFav: true,collectionId: favoriteListObject!.collectionId!)
                           });
                     } else if (contentList![index].contentType ==
                         "ASSESSMENT") {
@@ -211,7 +277,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                           .then((value) => {
                                 userTrackingHelper!.saveUserEntries(
                                     "content_exit",
-                                    contentList![index].contentId!)
+                                    contentList![index].contentId!,isFav: true,collectionId: favoriteListObject!.collectionId!)
                               });
                     } else if ((contentList![index].contentType == "EMI") ||
                         (contentList![index].contentType == "INFO_TIDBITS") ||
@@ -225,7 +291,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                           .then((value) => {
                                 userTrackingHelper!.saveUserEntries(
                                     "content_exit",
-                                    contentList![index].contentId!)
+                                    contentList![index].contentId!,isFav: true,collectionId: favoriteListObject!.collectionId!)
                               });
                     } else {
                       if (contentList![index].contentFormat == "VIDEO") {
@@ -235,7 +301,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                             .then((value) => {
                                   userTrackingHelper!.saveUserEntries(
                                       "content_exit",
-                                      contentList![index].contentId!)
+                                      contentList![index].contentId!,isFav: true,collectionId: favoriteListObject!.collectionId!)
                                 });
                       } else if (contentList![index].contentFormat == "AUDIO") {
                         setState(() {});
@@ -245,7 +311,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                             .then((value) => {
                                   userTrackingHelper!.saveUserEntries(
                                       "content_exit",
-                                      contentList![index].contentId!)
+                                      contentList![index].contentId!,isFav: true,collectionId: favoriteListObject!.collectionId!)
                                 });
                       } else {
                         Navigator.pushNamed(
@@ -254,7 +320,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                             .then((value) => {
                                   userTrackingHelper!.saveUserEntries(
                                       "content_exit",
-                                      contentList![index].contentId!)
+                                      contentList![index].contentId!,isFav: true,collectionId: favoriteListObject!.collectionId!)
                                 });
                       }
                     }
@@ -293,7 +359,9 @@ class FavoriteState extends State<FavoriteListWidget> {
 
   Future<void> updateFavorite(String id, String collectionId, int pos) async {
     isApiCalling = true;
-    setState(() {});
+    if(mounted){
+      setState(() {});
+    }
 
     ApiResponse? apiResponse =
         await apiHelper.updateFavorite(id, collectionId, false);
@@ -305,10 +373,14 @@ class FavoriteState extends State<FavoriteListWidget> {
       eventBus.fire(MyEvent(contsList));
       contentList!.removeAt(pos);
       isApiCalling = false;
-      setState(() {});
+      if(mounted){
+        setState(() {});
+      }
     } else {
       isApiCalling = false;
-      setState(() {});
+      if(mounted){
+        setState(() {});
+      }
     }
   }
 
@@ -354,7 +426,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                   Container(
                     child: Text(
                       "Delete collection \n" +
-                          favoriteListObject!.collectionName +
+                          favoriteListObject!.collectionName! +
                           "?",
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -430,7 +502,7 @@ class FavoriteState extends State<FavoriteListWidget> {
     isApiCalling = true;
     setState(() {});
     collectionHelper
-        .deleteCollection(favoriteListObject!.collectionId)
+        .deleteCollection(favoriteListObject!.collectionId!)
         .then((loginResponse) => {
               if (loginResponse.status == 200)
                 {
@@ -440,7 +512,9 @@ class FavoriteState extends State<FavoriteListWidget> {
                   Navigator.of(context).pop({"isDeleted": true})
                 }
               else
-                {isApiCalling = true, setState(() {})}
+                {isApiCalling = true,if(mounted){
+                  setState(() {})
+                }}
             });
     /*ApiResponse? apiResponse = await apiHelper.deleteCollection(favoriteListObject!.collectionId);
     LoginResponse loginResponse=LoginResponse.fromJson(apiResponse.data);
@@ -461,15 +535,19 @@ class FavoriteState extends State<FavoriteListWidget> {
 
     });
     collectionHelper
-        .updateCollectionName(collectionName, favoriteListObject!.collectionId)
+        .updateCollectionName(collectionName, favoriteListObject!.collectionId!)
         .then((collectionObject) => {
               if (collectionObject.collectionObject != null)
                 {
+
         isActionUpdate=true,
+                  collectionHelper.updateLocalCollectionName(favoriteListObject!.collectionId!, collectionName),
                   isApiCalling=false,
                   favoriteListObject!.collectionName =
                       mobileNumberCntrl.text.toString(),
-                  setState(() {})
+                 if(mounted){
+                   setState(() {})
+                 }
                 }
             });
     /*ApiResponse? apiResponse = await apiHelper.createCollection(collectionName,favoriteListObject!.collectionId);
@@ -506,9 +584,11 @@ class FavoriteState extends State<FavoriteListWidget> {
       eventBus.fire(MyEvent(contsList));
         contentList.removeAt(index);
         if(contentList.isNotEmpty){
-          setState(() {
+          if(mounted){
+            setState(() {
 
-          });
+            });
+          }
 
         }else{
           Navigator.of(context).pop();
@@ -517,7 +597,7 @@ class FavoriteState extends State<FavoriteListWidget> {
     }
   }
   void showActionModel() {
-    mobileNumberCntrl.text = favoriteListObject!.collectionName;
+    mobileNumberCntrl.text = favoriteListObject!.collectionName!;
     isNewCollection = false;
     isEnable = true;
     showModalBottomSheet(

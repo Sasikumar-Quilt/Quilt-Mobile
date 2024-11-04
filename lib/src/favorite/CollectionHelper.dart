@@ -9,6 +9,8 @@ class CollectionHelper{
   static final CollectionHelper _instance = CollectionHelper._internal();
   ApiHelper apiHelper=ApiHelper();
   List<CollectionObject> collectionList = [];
+  List<CollectionContentCountObject>favLists=[];
+
   factory CollectionHelper() {
     return _instance;
   }
@@ -65,14 +67,20 @@ class CollectionHelper{
       collectionList[i].collectionCount="0";
     }
   }
-  void updateCollectionCount(List<FavoriteListObject>favLists){
-    for(int i=0;i<favLists.length;i++){
-      int index=collectionList.indexWhere((element) => element.collectionId==favLists[i].collectionId);
-      if(favLists[i].contentList!=null){
-        int count=favLists[i].contentList!.length;
-        collectionList[index].collectionCount=count.toString();
+  void updateCollectionCount(List<CollectionContentCountObject>favLists){
+    this.favLists=favLists;
+    if(collectionList.isNotEmpty){
+      for(int i=0;i<favLists.length;i++){
+        int index=collectionList.indexWhere((element) => element.collectionId==favLists[i].collectionId);
+        if(!Utility.isEmpty(favLists[i].collectionCount)&&index!=-1){
+          collectionList[index].collectionCount=favLists[i].collectionCount.toString();
+        }
       }
     }
+  }
+  void updateLocalCollectionName(String collectionId,String collectionName){
+    int index=collectionList.indexWhere((element) => element.collectionId==collectionId);
+    collectionList[index].collectionName=collectionName;
 
   }
   void updateCollectionCountById(String collectionId,bool isAdd){

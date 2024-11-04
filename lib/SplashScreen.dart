@@ -19,6 +19,7 @@ import 'package:quilt/src/api/ApiHelper.dart';
 import 'package:quilt/src/api/BaseApiService.dart';
 import 'package:quilt/src/api/NetworkApiService.dart';
 import 'package:quilt/src/api/Objects.dart';
+import 'package:quilt/src/feed/HomeWidgetRoute.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:touch_ripple_effect/touch_ripple_effect.dart';
 import 'package:video_player/video_player.dart';
@@ -172,7 +173,6 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
     Future.delayed(Duration(milliseconds: 1500), () {
       nextImageTopPosition = MediaQuery.of(context).size.height;
       print("screenHeight");
-
       instructionTextBottomImage = MediaQuery.of(context).padding.top + 120;
       instructionTextBottom =
           (screenHeight / 2) - 180; // Center the text vertically
@@ -1047,7 +1047,7 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
   void navigateToScreen(bool isHome) {
     if (isHome) {
       Navigator.pushNamedAndRemoveUntil(
-          context, HomeWidgetRoutes.DashboardWidget, (route) => false);
+          context, HomeWidgetRoutes.Home, (route) => false);
     } else {
       Navigator.pushNamedAndRemoveUntil(
           context, HomeWidgetRoutes.EnterUserNameWidget, (route) => false);
@@ -1083,12 +1083,16 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
         print("cancelled");
       }
     } catch (error) {
+      print("GoogleLoginError");
+      print(error);
       isApiCalling = false;
       setState(() {});
     }
   }
 
   void handleError(error) {
+    print("handleError");
+    print(error);
     isApiCalling = false;
     setState(() {});
   }
@@ -1112,14 +1116,24 @@ class _AnimatedBackgroundScreenState extends State<SplashWidget>
         PreferenceUtils.setString(
             PreferenceUtils.SESSION_TOKEN, loginResponse!.sessionToken);
         PreferenceUtils.setString(
+            PreferenceUtils.APPSESSIONID, loginResponse!.appSessionId);
+        PreferenceUtils.setString(
             PreferenceUtils.USER_ID, loginResponse!.userId);
         if (!loginResponse!.isUserProfileUpdated) {
           Navigator.pushNamedAndRemoveUntil(
               context, HomeWidgetRoutes.EnterUserNameWidget, (route) => false);
         } else {
           PreferenceUtils.setBool(PreferenceUtils.IS_LOGIN, true);
-          Navigator.pushNamedAndRemoveUntil(
-              context, HomeWidgetRoutes.DashboardWidget, (route) => false);
+          if(isLogout){
+            isLogout=false;
+            eventBus.fire(ClickEvent([]));
+            Navigator.pushNamedAndRemoveUntil(
+                context, "/", (route) => false);
+          }else{
+            Navigator.pushNamedAndRemoveUntil(
+                context, HomeWidgetRoutes.Home, (route) => false);
+          }
+
         }
       } else {
         isApiCalling = false;

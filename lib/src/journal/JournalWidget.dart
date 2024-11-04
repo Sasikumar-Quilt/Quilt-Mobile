@@ -188,6 +188,7 @@ class JournalWidgetState extends State<JournalWidget>
         preloadVideos.playControllerAtIndex(index);
         videoPlayerController = preloadVideos.controllers[index] ?? null;
         if (videoPlayerController != null) {
+          isDestroy=false;
           videoPlayerController?.play();
         } else {
           videoPlayerController = new VideoPlayerController.networkUrl(
@@ -200,8 +201,10 @@ class JournalWidgetState extends State<JournalWidget>
 
             setState(() {});
           });
+          isDestroy=true;
         }
-        isDestroy=false;
+
+
       }else{
         isDestroy=true;
         videoPlayerController = new VideoPlayerController.networkUrl(
@@ -265,22 +268,6 @@ class JournalWidgetState extends State<JournalWidget>
       body: Container(
         child: Stack(
           children: [
-            /* Container( width: double.infinity,
-        height: double.infinity,child:CachedNetworkImage( fit: BoxFit.cover,
-      imageUrl: contentObj!.animations!,imageBuilder: (context, imageProvider) => Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                  image: imageProvider,
-                  fit: BoxFit.cover,
-                  colorFilter:
-                  ColorFilter.mode(
-                      Colors.black.withOpacity(0.85),
-                      BlendMode.darken
-                  )),
-            ),
-          ),
-      errorWidget: (context, url, error) => Icon(Icons.error),
-    ),),*/
             videoPlayerController != null
                 ? Stack(
                     children: [

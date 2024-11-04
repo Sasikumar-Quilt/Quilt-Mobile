@@ -59,7 +59,7 @@ class Utility{
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
 
-        content: Text(message),
+        content: Text(message,style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.black,
         duration: duration ?? const Duration(seconds: 3),
       ),

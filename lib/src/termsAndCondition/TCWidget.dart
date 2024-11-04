@@ -121,9 +121,9 @@ class WebviewWidgetState extends BasePageState<TCWebView>
           backgroundColor: Colors.white,
           body:Stack(children: [
             controller!=null?WebViewWidget(controller: controller!,):Container(),
-            InkWell(child: Container(child: Icon(Icons.arrow_back_ios_rounded,size: 20,),margin: EdgeInsets.only(left: 10,top: 20),),onTap: (){
+            Align(child: InkWell(child: Container(height: 40,width: 40,child: Icon(Icons.close,color: Colors.white,size: 25,),margin: EdgeInsets.only(right: 5,top: 10),),onTap: (){
               Navigator.of(context).pop();
-            },)
+            },),alignment: Alignment.topRight,)
           ],),
         ));
   }

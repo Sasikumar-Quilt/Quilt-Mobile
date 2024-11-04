@@ -51,7 +51,7 @@ class VideoplayerWidgetState extends BasePageState<VideoplayerWidget> {
   bool isbPlay=false;
   StreamSubscription<PhoneState>? _phoneStateSubscription;
   late PreloadVideos preloadVideos;
-
+bool isDestroy=false;
   @override
   void initState() {
     super.initState();
@@ -117,10 +117,39 @@ class VideoplayerWidgetState extends BasePageState<VideoplayerWidget> {
         isArg = true;
         final args = ModalRoute.of(context)?.settings.arguments as Map;
         contentObj = args["url"];
-        int index=args["index"];
-        preloadVideos.playControllerAtIndex(index);
-        _controller = preloadVideos.controllers[index] ?? null;
-        if(_controller==null){
+        if(args["index"]!=null){
+          int index=args["index"];
+          preloadVideos.playControllerAtIndex(index);
+          _controller = preloadVideos.controllers[index] ?? null;
+          if(_controller==null){
+            _controller = VideoPlayerController.networkUrl(
+                Uri.parse(contentObj!.videoURL!),
+                videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true,allowBackgroundPlayback: true))
+              ..initialize().then((_) {
+                if (contentObj!.duration != null) {
+                  _controller!.seekTo(contentObj!.duration!);
+                }
+                _controller?.play();
+                print("totalSeconds");
+                print(_controller!.value.duration.inSeconds.toDouble());
+                setState(() {});
+              });
+          }else{
+            if (contentObj!.duration != null) {
+              _controller!.seekTo(contentObj!.duration!);
+            }
+            if(_controller!.value.isInitialized){
+              print("notInitialized");
+              _controller!.initialize().then((value) => {
+              _controller?.play()
+              });
+            }
+            _controller?.play();
+            print("isPlayingVideo");
+            print(_controller!.value.duration.inSeconds.toDouble());
+            setState(() {});
+          }
+        }else{
           _controller = VideoPlayerController.networkUrl(
               Uri.parse(contentObj!.videoURL!),
               videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true,allowBackgroundPlayback: true))
@@ -133,15 +162,8 @@ class VideoplayerWidgetState extends BasePageState<VideoplayerWidget> {
               print(_controller!.value.duration.inSeconds.toDouble());
               setState(() {});
             });
-        }else{
-          if (contentObj!.duration != null) {
-            _controller!.seekTo(contentObj!.duration!);
-          }
-          _controller?.play();
-          print("isPlayingVideo");
-          print(_controller!.value.duration.inSeconds.toDouble());
-          setState(() {});
         }
+
         isPlay=true;
         _controller!.addListener(() {
           if(!mounted||_controller==null||currentRouteName!=HomeWidgetRoutes.VideoCompletedWidget){
@@ -187,9 +209,13 @@ class VideoplayerWidgetState extends BasePageState<VideoplayerWidget> {
   void dispose() {
     WakelockPlus.disable();
     _phoneStateSubscription?.cancel();
-    _controller?.pause();
-    _controller?.removeListener(() { });
-    _controller=null;
+    if(isDestroy){
+      _controller?.dispose();
+    }else{
+      _controller?.pause();
+    }
+    _controller = null;
+
     super.dispose();
   }
 
@@ -304,7 +330,7 @@ class VideoplayerWidgetState extends BasePageState<VideoplayerWidget> {
               setState(() {});
             },
           )
-              : Center(child: Lottie.asset("assets/images/feed_preloader.json")),
+              : Center(child: Lottie.asset("assets/images/feed_preloader.json",height: 100,width: 100)),
         )),onWillPop:()=> _backpress(),);
   }
 Future<bool>_backpress() async{

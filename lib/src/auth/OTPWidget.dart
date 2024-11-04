@@ -17,6 +17,7 @@ import '../OtpView.dart';
 import '../PrefUtils.dart';
 import '../api/ApiHelper.dart';
 import '../api/Objects.dart';
+import '../feed/HomeWidgetRoute.dart';
 
 class OTPWidget extends BasePage {
   @override
@@ -268,13 +269,23 @@ class OTPWidgetState extends BasePageState<OTPWidget> {
         PreferenceUtils.setString(
             PreferenceUtils.SESSION_TOKEN, loginResponse!.sessionToken);
         PreferenceUtils.setString(
+            PreferenceUtils.APPSESSIONID, loginResponse!.appSessionId);
+        PreferenceUtils.setString(
             PreferenceUtils.USER_ID, loginResponse!.userId);
         if(!loginResponse!.isUserProfileUpdated){
           Navigator.pushNamedAndRemoveUntil(context, HomeWidgetRoutes.EnterUserNameWidget, (route) => false);
         }else{
           PreferenceUtils.setBool(
               PreferenceUtils.IS_LOGIN,true);
-          Navigator.pushNamedAndRemoveUntil(context, HomeWidgetRoutes.DashboardWidget, (route) => false);
+          if(isLogout){
+            isLogout=false;
+            eventBus.fire(ClickEvent([]));
+            Navigator.pushNamedAndRemoveUntil(
+                context, "/", (route) => false);
+          }else{
+            Navigator.pushNamedAndRemoveUntil(context, HomeWidgetRoutes.Home, (route) => false);
+
+          }
         }
       } else {
         isApiCalling=false;

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferenceUtils {
   static String SESSION_TOKEN="session_token";
+  static String APPSESSIONID="appSessionId";
   static String USER_ID="user_id";
   static String MOODID="moodId";
   static String IS_LOGIN="is_login";

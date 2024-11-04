@@ -13,7 +13,6 @@ import 'package:quilt/src/Assessment/AssessmentListWidget.dart';
 import 'package:quilt/src/Assessment/AssessmentWidget.dart';
 import 'package:quilt/src/DashbaordWidget.dart';
 import 'package:quilt/src/PushNotificationService.dart';
-import 'package:quilt/src/SliderWidget.dart';
 import 'package:quilt/src/WebViewWidget.dart';
 import 'package:quilt/src/auth/EditProfileWidget.dart';
 import 'package:quilt/src/auth/OTPWidget.dart';
@@ -45,12 +44,12 @@ const greyColor=Color(0xFFA0949D);
 final routes = <String, Widget>{
   HomeWidgetRoutes.SplashScreen:SplashWidget(),
   HomeWidgetRoutes.EnterPasswordWidget:OTPWidget(),
-  HomeWidgetRoutes.slideScreen:SliderPage(),
   HomeWidgetRoutes.webScreenScreen:WebviewWidget(),
   HomeWidgetRoutes.profileScreen:ProfileWidget(),
   HomeWidgetRoutes.EditProfileWidget:EditProfileWidget(),
   HomeWidgetRoutes.EnterUserNameWidget:CreateProfileWidget(),
-  HomeWidgetRoutes.DashboardWidget:MainContainerWidget(),
+  HomeWidgetRoutes.DashboardWidget:DashboardWidget(),
+  HomeWidgetRoutes.Home:MainContainerWidget(),
   HomeWidgetRoutes.VideoplayerWidget:VideoplayerWidget(),
   HomeWidgetRoutes.VideoCompletedWidget:VideoCompletedWidget(),
   HomeWidgetRoutes.FeedBackWidget:FeedBackWidget(),
@@ -81,6 +80,7 @@ class HomeWidgetRoutes{
   static const editProfile = "editProfile";
   static const EnterAgeWidget = "EnterAgeWidget";
   static const GenderWidget = "GenderWidget";
+  static const Home = "home";
   static const DashboardWidget = "DashboardWidget";
   static const VideoplayerWidget = "VideoplayerWidget";
   static const VideoCompletedWidget = "VideoCompletedWidget";
@@ -131,7 +131,6 @@ class MyApp extends State<App> {
   }
   @override
   void dispose() {
-    print("applicationKilled");
     super.dispose();
   }
   // This widget is the root of your application.

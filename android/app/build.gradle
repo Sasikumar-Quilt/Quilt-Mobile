@@ -60,8 +60,8 @@ android {
         applicationId "com.QWLT.Quilt"
         minSdkVersion 28
         targetSdkVersion flutter.targetSdkVersion
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
+        versionCode 54
+        versionName "2.0.15"
     }
 
     buildTypes {

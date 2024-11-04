@@ -10,6 +10,7 @@ class UserResponse {
   int status = 0;
   int errorCode = 0;
   String sessionToken = "";
+  String appSessionId = "";
   String userId = "";
   bool isFirstLogin = false;
   bool isUserProfileUpdated = false;
@@ -22,6 +23,7 @@ class UserResponse {
     if (json["data"] != null) {
       if(json["data"]["errorCode"]==null){
         sessionToken = json["data"]["sessionToken"];
+        appSessionId = json["data"]["appSessionId"];
         userId = json["data"]["userId"];
         isFirstLogin = json["data"]["isFirstLogin"];
         isUserProfileUpdated = json["data"]["isUserProfileUpdated"] ?? false;
@@ -147,6 +149,7 @@ class ProfileObject {
   String phoneNumber = "";
   String countryCode = "";
   String profilePicture = "";
+  String notification = "";
   String gender = "";
   String age = "";
   String timeZone = "";
@@ -169,6 +172,7 @@ class ProfileObject {
       dob = pData["dob"]??"";
       age = pData["age"].toString()??"";
       timeZone = pData["timeZone"]??"";
+      notification = pData["notification"]??"ON";
     }
   }
   ProfileObject.sFromJson(Map<String, dynamic> json) {
@@ -181,6 +185,7 @@ class ProfileObject {
     gender = json["gender"];
     dob = json["dob"];
     age = json["age"]??"";
+    notification = json["notification"]??"ON";
     timeZone = json["timeZone"];
   }
   Map<String, dynamic> toJson() {
@@ -193,6 +198,7 @@ class ProfileObject {
       'profilePicture': profilePicture,
       'gender': gender,
       'dob': dob,
+      'notification': notification,
       'age': age,
       'timeZone': timeZone,
     };
@@ -463,7 +469,18 @@ class JournalObject{
     updatedAt = json["updatedAt"];
   }
 }
-
+class CollectionContentCountList {
+  List<CollectionContentCountObject>? collectionList=[];
+  CollectionContentCountList.fromJson(Map<String, dynamic> json) {
+    if (json['data'] != null) {
+      var list = json['data'] as List;
+      if(list.isNotEmpty) {
+        collectionList =
+            list.map((i) => CollectionContentCountObject.fromJson(i)).toList();
+      }
+    }
+  }
+}
 class CollectionList {
   List<CollectionObject>? collectionList=[];
   CollectionList.fromJson(Map<String, dynamic> json) {
@@ -487,6 +504,18 @@ class CreateCollectionObject{
 
   }
   }
+class CollectionContentCountObject{
+  String? id;
+  String? collectionId;
+  String collectionCount="0";
+  String? collectionName;
+  CollectionContentCountObject();
+  CollectionContentCountObject.fromJson(Map<String, dynamic> json) {
+    collectionId = json["id"];
+    collectionName = json["collectionName"];
+    collectionCount = json["count"].toString();
+  }
+}
 class CollectionObject{
   String? id;
   String? collectionId;
@@ -567,7 +596,7 @@ class FavoriteList {
 
         }
         favoriteListObject.contentList=contentList;
-        favoriteListObject.collectionName=lists[j]["userContentCollectionDetails"]["collectionName"];
+      //  favoriteListObject.collectionName=lists[j]["userContentCollectionDetails"]["collectionName"];
         favoriteListObject.collectionId=lists[j]["collectionId"];
         favList!.add(favoriteListObject);
       }
