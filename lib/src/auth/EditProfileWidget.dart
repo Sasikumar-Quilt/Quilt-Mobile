@@ -14,6 +14,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:quilt/main.dart';
 import 'package:quilt/src/Utility.dart';
 import 'package:quilt/src/api/BaseApiService.dart';
@@ -34,7 +35,7 @@ class EditProfileWidget extends BasePage {
   EditProfileWidgetState createState() => EditProfileWidgetState();
 }
 
-class EditProfileWidgetState extends BasePageState<EditProfileWidget> {
+class EditProfileWidgetState extends BasePageState<EditProfileWidget> with WidgetsBindingObserver{
   bool isEnable = false;
   bool hidden = false;
   String username = "";
@@ -48,18 +49,20 @@ class EditProfileWidgetState extends BasePageState<EditProfileWidget> {
   List<TextEditingController?>? controls;
   bool isArg = false;
   bool isAlreadyRegistered = false;
-  Timer? _timer = null;
-  int _start = 59;
   bool isApiCalling = false;
   ProfileObject? profileObject;
   int genderType = 1;
   bool isOpened = true;
+  bool isNotificationPermission = false;
   bool isNotificationOpened = true;
   File? file;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    isGrantedNotificationPermission(false);
     if (!Utility.isEmpty(PreferenceUtils.getString("profile_data", ""))) {
       profileObject = ProfileObject.sFromJson(
           jsonDecode(PreferenceUtils.getString("profile_data", "")));
@@ -68,10 +71,47 @@ class EditProfileWidgetState extends BasePageState<EditProfileWidget> {
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light));
   }
+  Future<void> isGrantedNotificationPermission(bool isCheck) async {
+    Permission.notification.isGranted.then((value) => {
+      isNotificationPermission=value,
+      if(isCheck&&isNotificationPermission){
+        profileObject!.notification = "ON"
+      },
+      setState(() {
+
+      })
+    });
+  }
+
+requestNotificationPermission() async {
+    print("requestNotificationPermission");
+    var status = await Permission.notification.status;
+    print(status);
+    if (status.isDenied || status.isPermanentlyDenied) {
+      if(status.isPermanentlyDenied){
+        openAppSettings();
+      }else{
+        status= await Permission.notification.request();
+         isGrantedNotificationPermission(true);
+      }
+    }else{
+      isGrantedNotificationPermission(true);
+    }
+
+  }
 
   @override
   void dispose() {
     super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+
+  }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+     if (state == AppLifecycleState.resumed&&editType==5) {
+      isGrantedNotificationPermission(true);
+    }
   }
 
   @override
@@ -459,7 +499,7 @@ class EditProfileWidgetState extends BasePageState<EditProfileWidget> {
                                   child: Container(
                                 margin: EdgeInsets.only(left: 10, top: 0),
                                 child: Text(
-                                  profileObject!.notification,
+                                  isNotificationPermission&&profileObject!.notification=="ON"?"ON":"OFF",
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 16,
@@ -508,7 +548,7 @@ class EditProfileWidgetState extends BasePageState<EditProfileWidget> {
                                             fontFamily: "Causten-Regular"),
                                       ),
                                     )),
-                                    profileObject!.notification == "ON"
+                                    isNotificationPermission&&profileObject!.notification == "ON"
                                         ? SvgPicture.asset(
                                             "assets/images/check_circle_blue.svg")
                                         : Container(),
@@ -516,8 +556,13 @@ class EditProfileWidgetState extends BasePageState<EditProfileWidget> {
                                 ),
                               ),
                               onTap: () {
-                                profileObject!.notification = "ON";
-                                setState(() {});
+                                if(isNotificationPermission){
+                                  profileObject!.notification = "ON";
+                                  setState(() {});
+                                }else{
+                                  requestNotificationPermission();
+                                }
+
                               },
                             ),
                             InkWell(
@@ -648,10 +693,7 @@ class EditProfileWidgetState extends BasePageState<EditProfileWidget> {
                       height: 150,
                       width: 150,
                       child: Center(
-                          child: Lottie.asset(
-                              "assets/images/feed_preloader.json",
-                              height: 150,
-                              width: 150)),
+                          child: Image.asset("assets/images/loader.gif",height: 130,width: 130,)),
                     ),
                   )
                 : Positioned(

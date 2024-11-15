@@ -288,7 +288,9 @@ class EMIWidgetState extends State<EMIWidget> with WidgetsBindingObserver {
     apiHelper.logEmi(contentObj!.contentId!);
     int from = 2;
     if (contentObj!.contentType == "INFO_TIDBITS" ||
-        contentObj!.contentType == "INFO_TIDBITS_OCD"||contentObj!.contentType == "INFO_TIDBITS_GENERAL") {
+        contentObj!.contentType == "INFO_TIDBITS_OCD"||contentObj!.contentType == "INFO_TIDBITS_GENERAL"||contentObj!.contentType ==
+        "INFOBITES"||contentObj!.contentType ==
+        "CLINICAL_INFOBITES") {
       from = 4;
     }
     Navigator.pushNamed(context, HomeWidgetRoutes.VideoCompletedWidget,
@@ -389,7 +391,7 @@ class EMIWidgetState extends State<EMIWidget> with WidgetsBindingObserver {
                         width: 100,
                         color: Colors.black,
                         child: Center(
-                            child: Lottie.asset("assets/images/feed_preloader.json")),
+                            child: Image.asset("assets/images/loader.gif",height: 130,width: 130,)),
                       ),
                     ),
                   ),
@@ -507,7 +509,9 @@ class EMIWidgetState extends State<EMIWidget> with WidgetsBindingObserver {
                                                       "INFO_TIDBITS" ||
                                                   contentObj!.contentType ==
                                                       "INFO_TIDBITS_OCD"|| contentObj!.contentType ==
-                                                  "INFO_TIDBITS_GENERAL") {
+                                                  "INFO_TIDBITS_GENERAL"||contentObj!.contentType ==
+                                                  "INFOBITES"||contentObj!.contentType ==
+                                                  "CLINICAL_INFOBITES") {
                                                 from = 4;
                                               }
                                               Navigator.pushNamed(

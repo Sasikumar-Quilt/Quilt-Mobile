@@ -192,7 +192,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                             children: [
                               Container(
                                 child: Text(
-                                  contentList![index].contentName!,
+                                  contentList![index].contentFormat=="GAME"?contentList![index].contentName!:contentList![index].description!,
                                   style: TextStyle(
                                       fontSize: 16.0,
                                       fontFamily: "Causten-Medium",
@@ -260,7 +260,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                     userTrackingHelper!.saveUserEntries(
                         "content_entry", contentList![index].contentId!,isFav: true,collectionId: favoriteListObject!.collectionId!);
 
-                    if (contentList![index].contentType == "JOURNAL") {
+                    if ((contentList![index].contentType == "JOURNAL")||(contentList![index].contentType == "JOURNAL_OCD")||(contentList![index].contentType == "JOURNAL_OCD_EMI")||(contentList![index].contentType == "JOURNAL_OCD_MENTALHEALTH")) {
                       print(contentList![index].contentUrl!);
                       Navigator.pushNamed(
                           context, HomeWidgetRoutes.JournalWidget, arguments: {
@@ -284,7 +284,9 @@ class FavoriteState extends State<FavoriteListWidget> {
                         (contentList![index].contentType ==
                             "INFO_TIDBITS_OCD") ||
                         (contentList![index].contentType ==
-                            "INFO_TIDBITS_GENERAL")) {
+                            "INFO_TIDBITS_GENERAL")||(contentList![index].contentType ==
+                        "INFOBITES")||(contentList![index].contentType ==
+                        "CLINICAL_INFOBITES")||(contentList![index].contentType == "EMI_OCD")||(contentList![index].contentType == "EMI_MENTALHEALTH_OCD") ) {
                       print(contentList![index].contentUrl!);
                       Navigator.pushNamed(context, HomeWidgetRoutes.EmiWidget,
                               arguments: {"url": contentList![index]})
@@ -294,7 +296,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                                     contentList![index].contentId!,isFav: true,collectionId: favoriteListObject!.collectionId!)
                               });
                     } else {
-                      if (contentList![index].contentFormat == "VIDEO") {
+                      if (!contentList![index].isVideoAudio&&contentList![index].contentFormat == "VIDEO") {
                         Navigator.pushNamed(
                                 context, HomeWidgetRoutes.VideoplayerWidget,
                                 arguments: {"url": contentList![index]})
@@ -303,7 +305,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                                       "content_exit",
                                       contentList![index].contentId!,isFav: true,collectionId: favoriteListObject!.collectionId!)
                                 });
-                      } else if (contentList![index].contentFormat == "AUDIO") {
+                      } else if (contentList![index].contentFormat == "AUDIO"||contentList![index].isVideoAudio) {
                         setState(() {});
                         Navigator.pushNamed(
                                 context, HomeWidgetRoutes.AudioPlayerWidget,
@@ -338,10 +340,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                       height: 150,
                       width: 150,
                       child: Center(
-                          child: Lottie.asset(
-                              "assets/images/feed_preloader.json",
-                              height: 150,
-                              width: 150)),
+                          child: Image.asset("assets/images/loader.gif",height: 130,width: 130,)),
                     ),
                   )
                 : Positioned(
@@ -385,24 +384,26 @@ class FavoriteState extends State<FavoriteListWidget> {
   }
 
   String getContentType(String lowerCase) {
-    if ((lowerCase.toLowerCase() == "positive_meditation") ||
+    if ((lowerCase.toLowerCase() == "positive_meditation")||(lowerCase.toLowerCase() == "yoga_nidra") ||
         (lowerCase.toLowerCase() == "mantra_meditation") ||
         (lowerCase.toLowerCase() == "negative_meditation") ||
-        (lowerCase.toLowerCase() == "mindfulness_meditation")) {
+        (lowerCase.toLowerCase() == "mindfulness_meditation")||(lowerCase.toLowerCase()=="walking_meditation")) {
       return "MEDITATION";
     } else if ((lowerCase.toLowerCase() == "hypnotic_induction")) {
       return "HYPNOSIS";
     } else if ((lowerCase.toLowerCase() == "info_tidbits") ||
         (lowerCase.toLowerCase() == "info_tidbits_ocd") ||
-        (lowerCase.toLowerCase() == "info_tidbits_general")) {
-      return "INTERESTING FACTS";
-    } else if (lowerCase.toLowerCase() == "emi") {
+        (lowerCase.toLowerCase() == "info_tidbits_general")||(lowerCase.toLowerCase() == "clinical_infobites")||(lowerCase.toLowerCase() == "infobites")) {
+      return "INFOBITES";
+    } else if ((lowerCase.toLowerCase() == "emi")||(lowerCase.toLowerCase() == "emi_ocd")||(lowerCase.toLowerCase() == "emi_mentalhealth_ocd")) {
       return "QUICK RESET";
-    } else if (lowerCase.toLowerCase() == "426_breathing" ||
+    }  else if (lowerCase.toLowerCase() == "426_breathing" ||
         lowerCase.toLowerCase() == "box_breathing" ||
         lowerCase.toLowerCase() == "positive_426_breathing" ||
-        lowerCase.toLowerCase() == "positive_box_breathing") {
+        lowerCase.toLowerCase() == "positive_box_breathing"||lowerCase.toLowerCase()=="sympathetic_breathing") {
       return "BREATH";
+    }else if ((lowerCase.toLowerCase() == "journal_ocd")||(lowerCase.toLowerCase() == "journal_ocd_emi")||(lowerCase.toLowerCase() == "journal_ocd_mentalhealth")) {
+      return "JOURNAL";
     } else {
       return lowerCase.toUpperCase().replaceAll("_", " ");
     }
@@ -824,6 +825,12 @@ class FavoriteState extends State<FavoriteListWidget> {
   String contentTypeImage(String lowerCase) {
     if (lowerCase == "sleep_story") {
       return "assets/images/moon.svg";
+    }else if (lowerCase == "success_story") {
+      return "assets/images/success_story.svg";
+    }else if (lowerCase == "motivational_speech") {
+      return "assets/images/motivational_story.svg";
+    }else if (lowerCase == "stretching") {
+      return "assets/images/stretching.svg";
     } else if (lowerCase == "game") {
       return "assets/images/game.svg";
     } else if ((lowerCase == "meditation") ||
@@ -831,25 +838,25 @@ class FavoriteState extends State<FavoriteListWidget> {
         (lowerCase == "positive_meditation") ||
         (lowerCase == "mantra_meditation") ||
         (lowerCase == "negative_meditation") ||
-        (lowerCase == "mindfulness_meditation")) {
+        (lowerCase == "mindfulness_meditation")||(lowerCase=="walking_meditation")||(lowerCase == "yoga_nidra")) {
       return "assets/images/meditation.svg";
     } else if (lowerCase == "breath") {
       return "assets/images/wind.svg";
-    } else if (lowerCase == "journal") {
+    }else if ((lowerCase == "journal")||(lowerCase == "journal_ocd")||(lowerCase == "journal_ocd_emi")||(lowerCase == "journal_ocd_mentalhealth")) {
       return "assets/images/pen_white.svg";
-    } else if (lowerCase == "emi") {
+    }else if ((lowerCase == "emi")||(lowerCase == "emi_ocd")||(lowerCase == "emi_mentalhealth_ocd")) {
       return "assets/images/emi.svg";
     } else if (lowerCase == "breath" ||
         lowerCase == "426_breathing" ||
         lowerCase == "box_breathing" ||
         lowerCase == "positive_426_breathing" ||
-        lowerCase == "positive_box_breathing") {
+        lowerCase == "positive_box_breathing"||lowerCase=="sympathetic_breathing") {
       return "assets/images/wind.svg";
     } else if (lowerCase == "hypnotic_induction") {
       return "assets/images/Hipnosys.svg";
-    } else if (lowerCase == "info_tidbits" ||
-        lowerCase == "info_tidbits_ocd" ||
-        lowerCase == "info_tidbits_general") {
+    }  else if ((lowerCase == "info_tidbits") ||
+        (lowerCase == "info_tidbits_ocd") ||
+        (lowerCase == "info_tidbits_general")||(lowerCase=="clinical_infobites")||(lowerCase=="infobites")) {
       return "assets/images/Lightbulb.svg";
     } else {
       return "assets/images/moon.svg";

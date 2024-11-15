@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:quilt/src/Utility.dart';
 import 'package:quilt/src/video/AudioPlayerManager.dart';
+import 'package:quilt/src/video/PreloadVideo.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -49,7 +50,6 @@ class _VideoWidgetState extends State<VideoWidget> {
   late VideoPlayerController? videoPlayerController;
   Duration? _lastPosition;
   String contentId = "";
-
   //final player = AudioPlayer();
   AudioPlayerManager audioPlayerManager = AudioPlayerManager();
 
@@ -83,15 +83,18 @@ class _VideoWidgetState extends State<VideoWidget> {
         if (_lastPosition != null && !widget.isVideoAudio) {
           videoPlayerController!.seekTo(_lastPosition!);
         }
+       PreloadVideos preloadVideos=PreloadVideos(updateWidget);
+        preloadVideos.controllers[tempPageCount]= videoPlayerController!;
         videoPlayerController!.play();
         //       Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
         if (mounted) {
           setState(() {});
         }
-      }).timeout(const Duration(seconds: 30)).catchError((onError){
+      });
+      /*.timeout(const Duration(seconds: 30)).catchError((onError){
         videoPlayerController!.dispose();
         print("failed to video url");
-      });
+      });*/
     } else {
       videoPlayerController?.play();
       if (_lastPosition != null && !widget.isVideoAudio) {
@@ -105,6 +108,10 @@ class _VideoWidgetState extends State<VideoWidget> {
     }
   }
 
+  void updateWidget() {
+    print("updateWidget");
+    setState(() {});
+  }
   void addVideoListener() {
     videoPlayerController!.addListener(() {
       if (!widget.isVideoAudio) {
@@ -180,6 +187,7 @@ class _VideoWidgetState extends State<VideoWidget> {
       print("dispose");
       //audioPlayerManager.pause();
     }
+
     super.dispose();
   }
 
@@ -212,8 +220,7 @@ class _VideoWidgetState extends State<VideoWidget> {
                     width: 100,
                     color: Colors.black,
                     child: Center(
-                        child: Lottie.asset(
-                            "assets/images/feed_preloader.json")
+                        child:Image.asset("assets/images/loader.gif",height: 130,width: 130,)
                         ),
                   ),
                 ),

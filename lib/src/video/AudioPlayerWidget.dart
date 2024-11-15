@@ -121,6 +121,7 @@ class AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         videoPlayerController = preloadVideos.controllers[index] ?? null;
         if (videoPlayerController != null) {
           videoPlayerController?.play();
+          isDestroy=false;
         }else{
           videoPlayerController = new VideoPlayerController.networkUrl(
               Uri.parse(contentObj!.videoURL),
@@ -132,8 +133,9 @@ class AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
             setState(() {});
           });
+          isDestroy=true;
         }
-        isDestroy=false;
+
       }else{
         isDestroy=true;
         videoPlayerController = new VideoPlayerController.networkUrl(
@@ -332,8 +334,7 @@ if(mounted){
                             height: 100,
                             width: 100,
                             color: Colors.black,
-                            child: Center(
-                                child: Lottie.asset("assets/images/feed_preloader.json")),
+                            child: Image.asset("assets/images/loader.gif",height: 130,width: 130,),
                           ),
                         ),
                       ),
@@ -365,7 +366,7 @@ if(mounted){
                                 children: [
                                   Container(
                                     child: Text(
-                                      contentObj!.contentName!,
+                                      contentObj!.description!,
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                           color: Color(0xFFF8F7F8),

@@ -1,26 +1,16 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:lottie/lottie.dart';
-import 'package:page_transition/page_transition.dart';
 import 'package:quilt/main.dart';
-import 'package:quilt/src/PrefUtils.dart';
 import 'package:quilt/src/Utility.dart';
-import 'package:quilt/src/api/BaseApiService.dart';
-import 'package:quilt/src/api/LoadingUtils.dart';
-import 'package:quilt/src/api/NetworkApiService.dart';
 import 'package:quilt/src/base/BaseState.dart';
 import 'package:quilt/src/feedback/FeedbackWidget.dart';
 
-import '../api/ApiHelper.dart';
 import '../api/Objects.dart';
-import 'dart:math' as math;
 
 class VideoCompletedWidget extends BasePage {
   @override
@@ -28,14 +18,6 @@ class VideoCompletedWidget extends BasePage {
 }
 
 class VideoCompletedWidgetState extends BasePageState<VideoCompletedWidget> {
-  bool isEnable = false;
-  String username = "";
-  var identifier = "";
-  int selectedItem = 0;
-  TextEditingController mobileNumberCntrl = new TextEditingController();
-  ApiHelper apiHelper = ApiHelper();
-  String userName = "";
-  String age = "";
   String triggerMessage = "";
   bool isArg = false;
   int fromJournal = 0;
@@ -91,12 +73,7 @@ class VideoCompletedWidgetState extends BasePageState<VideoCompletedWidget> {
                           Column(mainAxisSize: MainAxisSize.max,
                             mainAxisAlignment: MainAxisAlignment.center,crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                             /* Container(
-                                child: Image.asset(
-                                    "assets/images/video_completed_bg.png",
-                                    fit: BoxFit.fill),
-                                width: double.infinity,
-                              ),*/
+
                               Container(alignment: Alignment.center,
                                 margin: EdgeInsets.only(
                                     left: 15, right: 15, top: 0),
@@ -158,7 +135,7 @@ class VideoCompletedWidgetState extends BasePageState<VideoCompletedWidget> {
                                     ),
                                     Container(
                                       child: Text(
-                                        fromJournal!=4&&fromJournal!=2&&fromJournal!=3?'Swipe left or right to breeze\n through your statistics':fromJournal==3?"Thanks for your response!":fromJournal==4?"Interesting Facts completed!":"Quick reset completed!",
+                                        fromJournal!=4&&fromJournal!=2&&fromJournal!=3?'Swipe left or right to breeze\n through your statistics':fromJournal==3?"Thanks for your response!":fromJournal==4?"Infobites completed!":"Quick reset completed!",
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontSize:fromJournal==3?20: 13,
@@ -296,47 +273,15 @@ String contentType(){
       return "Sleep Story";
     }else if(contentObj!.contentType=="MEDITATION"){
       return "Meditation";
-    }else if(contentObj!.contentType=="BREATH"||(contentObj!.contentType=="426_BREATHING")||(contentObj!.contentType=="POSITIVE_426_BREATHING")||(contentObj!.contentType=="BOX_BREATHING")||(contentObj!.contentType=="POSITIVE_BOX_BREATHING")){
+    }else if(contentObj!.contentType=="BREATH"||(contentObj!.contentType=="426_BREATHING")||(contentObj!.contentType=="POSITIVE_426_BREATHING")||(contentObj!.contentType=="BOX_BREATHING")||(contentObj!.contentType=="POSITIVE_BOX_BREATHING")||(contentObj!.contentType=="SYMPATHETIC_BREATHING")){
       return "Breathing Exercise";
     }else if(contentObj!.contentType=="MINDFULNESS"){
       return "Mindfulness Meditation";
-    }else  if ((contentObj!.contentType!.toLowerCase()=="positive_meditation")|| (contentObj!.contentType!.toLowerCase()=="mantra_meditation")||(contentObj!.contentType!.toLowerCase()=="negative_meditation")||(contentObj!.contentType!.toLowerCase()=="mindfulness_meditation")) {
+    }else  if ((contentObj!.contentType!.toLowerCase()=="positive_meditation")|| (contentObj!.contentType!.toLowerCase()=="mantra_meditation")||(contentObj!.contentType!.toLowerCase()=="negative_meditation")||(contentObj!.contentType!.toLowerCase()=="mindfulness_meditation")||(contentObj!.contentType!.toLowerCase()=="walking_meditation")||(contentObj!.contentType!.toLowerCase()=="yoga_nidra")) {
       return "Meditation";
     }
     return "Sleep Story";
 }
-  void updateProfileDate() async {
-    String gender = "";
-    if (selectedItem == 0) {
-      gender = "Male";
-    } else if (selectedItem == 1) {
-      gender = "Female";
-    } else if (selectedItem == 2) {
-      gender = "Non=binary";
-    } else if (selectedItem == 3) {
-      gender = "Prefer not to say";
-    }
-    //LoadingUtils.instance.showLoadingIndicator("Receiving...", context);
-    ApiResponse apiResponse = await apiHelper.updateUserDetails(
-        "", userName, "", gender, "", int.parse(age),"");
-    // LoadingUtils.instance.hideOpenDialog(context);
-    if (apiResponse.status == Status.COMPLETED) {
-      LoginResponse loginResponse = LoginResponse.fromJson(apiResponse.data);
-      print(loginResponse.status);
-      if (loginResponse.status == 200) {
-        PreferenceUtils.setBool(PreferenceUtils.IS_LOGIN, true);
-        Navigator.pushNamedAndRemoveUntil(
-            context, HomeWidgetRoutes.DashboardWidget, (route) => false,
-            arguments: {"isShowTerms": true});
-      } else {
-        Utility.showSnackBar(
-            context: context, message: loginResponse.message.toString());
-      }
-    } else {
-      Utility.showSnackBar(
-          context: context, message: apiResponse.message.toString());
-    }
-  }
 
   checkFeedback(value) {
     if(value!=null&&value["isFeedback"]==true){

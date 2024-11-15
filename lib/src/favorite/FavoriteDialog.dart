@@ -450,10 +450,7 @@ class _ModalContentState extends State<ModalContent> {
                         height: 100,
                         width: 100,
                         child: Center(
-                            child: Lottie.asset(
-                                "assets/images/feed_preloader.json",
-                                height: 100,
-                                width: 100)),
+                            child: Image.asset("assets/images/loader.gif",height: 130,width: 130,)),
                       ),
                     )
                   : Positioned(

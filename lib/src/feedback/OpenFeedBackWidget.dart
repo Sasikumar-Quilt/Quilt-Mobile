@@ -372,8 +372,7 @@ class OpenFeedBackWidgetState extends BasePageState<OpenFeedBackWidget> {
             height: 100,
             width: 100,
             child: Center(
-                child: Lottie.asset(
-                    "assets/images/feed_preloader.json",height: 100,width: 100)
+                child:Image.asset("assets/images/loader.gif",height: 130,width: 130,)
             ),
           ),
         ):Positioned(top: 0,bottom: 0,left: 0,right: 0,child: Container(),)

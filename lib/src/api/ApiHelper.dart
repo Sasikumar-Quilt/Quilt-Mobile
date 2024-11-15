@@ -234,7 +234,7 @@ class ApiHelper {
     var request = {
       "userContentId": id,
       "isDeleted": true,
-      "userId": PreferenceUtils.getString(  PreferenceUtils.USER_ID, ""),
+      "userId": PreferenceUtils.getString(PreferenceUtils.USER_ID, ""),
     };
     ApiResponse response =
     await baseApiService.postResponse(Constans.updateJournal,request, Status.METRIC_DATA);

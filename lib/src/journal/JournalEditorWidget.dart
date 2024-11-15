@@ -341,15 +341,6 @@ class JournalEditorWidgetState extends BasePageState<JournalEditorWidget> {
                             scrollDirection: Axis.horizontal,
                             child: Wrap(
                               children: [
-                                /* IconButton(
-                onPressed: () => context
-                    .read<SettingsCubit>()
-                    .updateSettings(
-                    state.copyWith(useCustomQuillToolbar: false)),
-                icon: const Icon(
-                  Icons.width_normal,
-                ),
-              ),*/
 
                                 QuillToolbarToggleStyleButton(
                                   options:
@@ -367,18 +358,7 @@ class JournalEditorWidgetState extends BasePageState<JournalEditorWidget> {
                                   controller: _controller,
                                   attribute: Attribute.underline,
                                 ),
-                                /*QuillToolbarClearFormatButton(
-                controller: _controller,
-              ),*/
-                                /*  QuillToolbarImageButton(
-                controller: _controller,
-              ),
-              QuillToolbarCameraButton(
-                controller: _controller,
-              ),
-              QuillToolbarVideoButton(
-                controller: _controller,
-              ),*/
+
                                 QuillToolbarColorButton(
                                   controller: _controller,
                                   isBackground: false,
@@ -452,10 +432,7 @@ class JournalEditorWidgetState extends BasePageState<JournalEditorWidget> {
                       height: 100,
                       width: 100,
                       child: Center(
-                          child: Lottie.asset(
-                              "assets/images/feed_preloader.json",
-                              height: 100,
-                              width: 100)),
+                          child: Image.asset("assets/images/loader.gif",height: 130,width: 130,)),
                     ),
                   )
                 : Positioned(

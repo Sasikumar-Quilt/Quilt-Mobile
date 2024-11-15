@@ -140,10 +140,7 @@ CollectionHelper collectionHelper=new CollectionHelper();
           height: 150,
           width: 150,
           child: Center(
-              child: Lottie.asset(
-                  "assets/images/feed_preloader.json",
-                  height: 150,
-                  width: 150)),
+              child: Image.asset("assets/images/loader.gif",height: 130,width: 130,)),
         ),
       )
           : Positioned(

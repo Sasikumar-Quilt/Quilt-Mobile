@@ -64,6 +64,9 @@ class UserTrackingHelper {
     if(Utility.isEmpty(moodId)){
       moodId="empty";
     }
+    if(isHashTag){
+      moodId=hashTag;
+    }
     if(isFav){
       moodId=collectionId;
       print("favorites");

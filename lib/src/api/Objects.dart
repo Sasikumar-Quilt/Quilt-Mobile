@@ -324,6 +324,7 @@ class ContentObj {
   String? contentType;
   String? contentDuration;
   String? contentFormat;
+  String? description;
   String? animations;
   bool? favourite;
   Duration? duration;
@@ -338,6 +339,7 @@ class ContentObj {
   String audioURL="";
   AssessmentList? assessmentList;
   bool isVideoAudio=false;
+  bool isShowFullDescription=false;
   ContentObj();
   ContentObj.fromJson(Map<String, dynamic> json) {
     id = json["id"];
@@ -355,12 +357,12 @@ class ContentObj {
     if(json["content"]["title"]!=null&&json["content"]["title"]["audioURL"]!=null){
       audioURL = json["content"]["title"]["audioURL"]??"";
     }
-    if(contentType=="JOURNAL"){
+    if(contentType=="JOURNAL"||contentType=="JOURNAL_OCD"||contentType=="JOURNAL_OCD_EMI"||contentType=="JOURNAL_OCD_MENTALHEALTH"){
       print("journal");
       print(json["content"]["content"]);
       contentUrl = json["content"]["content"]["question"];
       animations = json["content"]["content"]["imageURL"]??"";
-    }else if(contentType=="EMI"||contentType=="INFO_TIDBITS"||contentType=="INFO_TIDBITS_OCD"||contentType=="INFO_TIDBITS_GENERAL"){
+    }else if(contentType=="EMI"||contentType=="INFO_TIDBITS"||contentType=="INFO_TIDBITS_OCD"||contentType=="INFO_TIDBITS_GENERAL"||contentType=="EMI_OCD"||contentType=="EMI_MENTALHEALTH_OCD"||contentType=="INFOBITES"||contentType=="CLINICAL_INFOBITES"){
       print("emiContext");
       print(json["content"]["content"]);
       contentUrl = json["content"]["content"]["text"];
@@ -390,9 +392,11 @@ class ContentObj {
     }
     contentDuration = json["content"]["contentDuration"].toString()??"";
     contentFormat = json["content"]["contentFormat"]??"";
-    if(contentFormat=="VIDEO"){
+    description = json["content"]["description"]??"";
+   /* if(isVideoAudio&&contentFormat=="VIDEO"){
       isVideoAudio=false;
-    }
+    }*/
+
     collectionName = json["content"]["collectionName"]??"";
     collectionId = json["content"]["collectionId"]??"";
     isFav = json["content"]["isFavourite"]??false;
@@ -405,35 +409,7 @@ class ContentObj {
     }
     favourite = json["content"]["favourite"]??false;
   }
-  ContentObj.prefFromJson(Map<String, dynamic> json) {
-    print("prefFromJson");
-    print(json);
-    id = json["id"];
-    contentId = json["contentId"];
-    contentUrl = json["contentUrl"];
-    contentName = json["contentName"];
-    contentType = json["contentType"];
-    if(json["animations"]!=null){
-      animations =json["animations"]??"";
-    }
 
-    contentDuration = json["contentDuration"]??"";
-    contentFormat = json["contentFormat"]??"";
-    favourite = json["favourite"]??false;
-  }
-  Map<String, dynamic> toJson() {
-    return {
-      "id": this.id,
-      "contentId": this.contentId,
-      "contentUrl": this.contentUrl,
-      "contentName": this.contentName,
-      "contentType": this.contentType,
-      "animations": this.animations,
-      "contentDuration": this.contentDuration,
-      "contentFormat": this.contentFormat,
-      "favourite": this.favourite,
-    };
-  }
 }
 class JournalList {
   List<JournalObject>? journalList;
@@ -564,12 +540,13 @@ class FavoriteList {
               }
               contentObj.contentDuration=list[i]["contentDuration"].toString();
               contentObj.contentFormat=list[i]["contentFormat"];
-              if( contentObj.contentType=="JOURNAL"){
+              contentObj.description=list[i]["description"];
+              if( contentObj.contentType=="JOURNAL"||contentObj.contentType=="JOURNAL_OCD"||contentObj.contentType=="JOURNAL_OCD_EMI"||contentObj.contentType=="JOURNAL_OCD_MENTALHEALTH"){
                 print("journal");
                 print(list[i]["content"]);
                 contentObj.contentUrl = list[i]["content"]["question"];
                 contentObj.animations = list[i]["content"]["imageURL"];
-              }else if( contentObj.contentType=="EMI"||contentObj.contentType=="INFO_TIDBITS"||contentObj.contentType=="INFO_TIDBITS_OCD"||contentObj.contentType=="INFO_TIDBITS_GENERAL"){
+              }else if( contentObj.contentType=="EMI"||contentObj.contentType=="INFO_TIDBITS"||contentObj.contentType=="INFO_TIDBITS_OCD"||contentObj.contentType=="INFO_TIDBITS_GENERAL"||contentObj.contentType=="EMI_OCD"||contentObj.contentType=="EMI_MENTALHEALTH_OCD"||contentObj.contentType=="INFOBITES"||contentObj.contentType=="CLINICAL_INFOBITES"){
                 print("emiContext");
                 print(list[i]["content"]["content"]);
                 contentObj.contentUrl = list[i]["content"]["text"];

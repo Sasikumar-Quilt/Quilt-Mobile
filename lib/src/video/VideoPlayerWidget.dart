@@ -122,6 +122,7 @@ bool isDestroy=false;
           preloadVideos.playControllerAtIndex(index);
           _controller = preloadVideos.controllers[index] ?? null;
           if(_controller==null){
+            isDestroy=true;
             _controller = VideoPlayerController.networkUrl(
                 Uri.parse(contentObj!.videoURL!),
                 videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true,allowBackgroundPlayback: true))
@@ -150,6 +151,7 @@ bool isDestroy=false;
             setState(() {});
           }
         }else{
+          isDestroy=true;
           _controller = VideoPlayerController.networkUrl(
               Uri.parse(contentObj!.videoURL!),
               videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true,allowBackgroundPlayback: true))
@@ -281,7 +283,7 @@ bool isDestroy=false;
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.center,mainAxisSize: MainAxisSize.min,children: [
                         Container(
                           child: Text(
-                            contentObj!.contentName!,textAlign: TextAlign.center,
+                            contentObj!.description!,textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: Color(0xFFF8F7F8),
                                 fontSize: 14,
@@ -330,7 +332,7 @@ bool isDestroy=false;
               setState(() {});
             },
           )
-              : Center(child: Lottie.asset("assets/images/feed_preloader.json",height: 100,width: 100)),
+              : Center(child: Image.asset("assets/images/loader.gif",height: 130,width: 130,)),
         )),onWillPop:()=> _backpress(),);
   }
 Future<bool>_backpress() async{

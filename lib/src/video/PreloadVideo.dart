@@ -97,11 +97,13 @@ class PreloadVideos {
 
   Future _initializeControllerAtIndex(int index) async {
     print("_initializeControllerAtIndex");
+
     if(!controllers.containsKey(index)){
       if (index >= 0 &&
           index < contentList.length &&
           (contentList[index].isVideoAudio ||
               contentList[index].contentFormat == "VIDEO")) {
+
         final VideoPlayerController _controller =
         VideoPlayerController.networkUrl(Uri.parse(
             contentList[index].isVideoAudio
@@ -109,7 +111,7 @@ class PreloadVideos {
                 : contentList[index].contentUrl!));
         controllers[index] = _controller;
        try{
-         await _controller.initialize().timeout(const Duration(seconds: 30));
+         await _controller.initialize();
          if (index == 0) {
            updateWidget();
          }
@@ -168,7 +170,7 @@ class PreloadVideos {
         _controller.play();
       } else {
         _controller
-            .initialize().timeout(const Duration(seconds: 30))
+            .initialize()
             .then((value) => {updateWidget(),print("afterInitializeVideo")})
             .catchError((error) => {
              _controller.dispose(),

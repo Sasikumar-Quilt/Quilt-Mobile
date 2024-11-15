@@ -317,7 +317,7 @@ class JournalWidgetState extends State<JournalWidget>
                         width: 100,
                         color: Colors.black,
                         child: Center(
-                            child: Lottie.asset("assets/images/feed_preloader.json")),
+                            child: Image.asset("assets/images/loader.gif",height: 130,width: 130,)),
                       ),
                     ),
                   ),

@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lottie/lottie.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:quilt/src/Analytics/UserTrackingHelper.dart';
 import 'package:quilt/src/PrefUtils.dart';
 import 'package:quilt/src/Utility.dart';
@@ -36,17 +37,20 @@ class ProfileWidget extends StatefulWidget {
 class ProfileWidgetState extends State<ProfileWidget> {
   bool isEmpty = false;
   ApiHelper apiHelper = ApiHelper();
+
   List<FavoriteListObject> favLists = [];
   bool isApiContentLoading = false;
   CollectionHelper collectionHelper = new CollectionHelper();
   ProfileObject? profileObject;
   GoogleSignIn? _googleSignIn;
   UserTrackingHelper userTrackingHelper = new UserTrackingHelper();
+  bool isNotificationPermission = false;
 
   @override
   void initState() {
     super.initState();
     print("initFav");
+    isGrantedNotificationPermission(false);
     userTrackingHelper.checkExistUserEventRequest();
     if (defaultTargetPlatform == TargetPlatform.android) {
       _googleSignIn = GoogleSignIn(
@@ -71,6 +75,11 @@ class ProfileWidgetState extends State<ProfileWidget> {
       profileObject!.profilePicture="";
     }*/
     if (mounted) {
+      if (!isNotificationPermission &&
+          profileObject != null &&
+          profileObject!.notification == "ON") {
+        profileObject!.notification = "OFF";
+      }
       setState(() {});
     }
     ApiResponse? apiResponse = null;
@@ -80,6 +89,11 @@ class ProfileWidgetState extends State<ProfileWidget> {
       if (profileObject!.status == 200) {
         print("profileSaved");
         print(profileObject!.toJson());
+        if (!isNotificationPermission &&
+            profileObject != null &&
+            profileObject!.notification == "ON") {
+          profileObject!.notification = "OFF";
+        }
         PreferenceUtils.setString(
             "profile_data", jsonEncode(profileObject!.toJson()));
       }
@@ -91,6 +105,13 @@ class ProfileWidgetState extends State<ProfileWidget> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  Future<void> isGrantedNotificationPermission(bool isRefresh) async {
+    Permission.notification.isGranted.then((value) => {
+          isNotificationPermission = value,
+          if (isRefresh) {refreshPref()}
+        });
   }
 
   void updateProfile() {
@@ -108,7 +129,7 @@ class ProfileWidgetState extends State<ProfileWidget> {
     ApiResponse? apiResponse = await apiHelper.logout();
     if (apiResponse.responseCode == 200) {
       _googleSignIn?.signOut();
-      DataBaseHelper dataBaseHelper=DataBaseHelper.instance;
+      DataBaseHelper dataBaseHelper = DataBaseHelper.instance;
       dataBaseHelper.deleteAllRequests();
       PreferenceUtils.clear();
       Navigator.of(context).pop();
@@ -121,15 +142,15 @@ class ProfileWidgetState extends State<ProfileWidget> {
       setState(() {});
     }
   }
-void refreshPref(){
-  if (!Utility.isEmpty(PreferenceUtils.getString("profile_data", ""))) {
-    profileObject = ProfileObject.sFromJson(
-        jsonDecode(PreferenceUtils.getString("profile_data", "")));
-    setState(() {
 
-    });
+  void refreshPref() {
+    if (!Utility.isEmpty(PreferenceUtils.getString("profile_data", ""))) {
+      profileObject = ProfileObject.sFromJson(
+          jsonDecode(PreferenceUtils.getString("profile_data", "")));
+      setState(() {});
+    }
   }
-}
+
   Future<void> deletingImage(value) async {
     if (!Utility.isEmpty(PreferenceUtils.getString("profile_data", ""))) {
       profileObject = ProfileObject.sFromJson(
@@ -327,7 +348,9 @@ void refreshPref(){
                                   Container(
                                     margin: EdgeInsets.only(right: 10, top: 0),
                                     child: Text(
-                                      profileObject != null&&!Utility.isEmpty(profileObject!.gender)
+                                      profileObject != null &&
+                                              !Utility.isEmpty(
+                                                  profileObject!.gender)
                                           ? profileObject!.gender.capitalize()
                                           : "",
                                       style: TextStyle(
@@ -410,51 +433,57 @@ void refreshPref(){
                             fontFamily: "Causten-Medium"),
                       ),
                     ),
-                   InkWell(child:  Container(
-                     padding: EdgeInsets.only(
-                         top: 15, bottom: 15, left: 20, right: 20),
-                     margin: EdgeInsets.only(top: 12),
-                     decoration: BoxDecoration(
-                         color: Color(0xff3D3D3D).withOpacity(0.45),
-                         borderRadius: BorderRadius.circular(10)),
-                     child: Row(
-                       crossAxisAlignment: CrossAxisAlignment.center,
-                       children: [
-                         SvgPicture.asset("assets/images/bell.svg"),
-                         Expanded(
-                             child: Container(
-                               margin: EdgeInsets.only(left: 10, top: 0),
-                               child: Text(
-                                 "Notifications",
-                                 style: TextStyle(
-                                     color: Colors.white,
-                                     fontSize: 16,
-                                     fontFamily: "Causten-Regular"),
-                               ),
-                             )),
-                         Container(
-                           margin: EdgeInsets.only(right: 10, top: 0),
-                           child: Text(
-                               profileObject!=null&&!Utility.isEmpty(profileObject!.notification.capitalize())?profileObject!.notification.capitalize():"On",
-                             style: TextStyle(
-                                 color: Color(0xff8E8E93),
-                                 fontSize: 16,
-                                 fontFamily: "Causten-Regular"),
-                           ),
-                         ),
-                         SvgPicture.asset("assets/images/right_arrow.svg")
-                       ],
-                     ),
-                   ),onTap: (){
-                     Navigator.pushNamed(
-                         context, HomeWidgetRoutes.EditProfileWidget,
-                         arguments: {
-                           "editType": 5
-                         }).then((value) => {
-
-                          refreshPref()
-                     });
-                   },),
+                    InkWell(
+                      child: Container(
+                        padding: EdgeInsets.only(
+                            top: 15, bottom: 15, left: 20, right: 20),
+                        margin: EdgeInsets.only(top: 12),
+                        decoration: BoxDecoration(
+                            color: Color(0xff3D3D3D).withOpacity(0.45),
+                            borderRadius: BorderRadius.circular(10)),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SvgPicture.asset("assets/images/bell.svg"),
+                            Expanded(
+                                child: Container(
+                              margin: EdgeInsets.only(left: 10, top: 0),
+                              child: Text(
+                                "Notifications",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontFamily: "Causten-Regular"),
+                              ),
+                            )),
+                            Container(
+                              margin: EdgeInsets.only(right: 10, top: 0),
+                              child: Text(
+                                profileObject != null &&
+                                        !Utility.isEmpty(profileObject!
+                                            .notification
+                                            .capitalize())
+                                    ? profileObject!.notification.capitalize()
+                                    : "On",
+                                style: TextStyle(
+                                    color: Color(0xff8E8E93),
+                                    fontSize: 16,
+                                    fontFamily: "Causten-Regular"),
+                              ),
+                            ),
+                            SvgPicture.asset("assets/images/right_arrow.svg")
+                          ],
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pushNamed(context,
+                            HomeWidgetRoutes.EditProfileWidget, arguments: {
+                          "editType": 5
+                        }).then((value) => {
+                              isGrantedNotificationPermission(true),
+                            });
+                      },
+                    ),
                     Container(
                       margin: EdgeInsets.only(left: 0, top: 20),
                       child: Text(
@@ -569,8 +598,17 @@ void refreshPref(){
                     height: 150,
                     width: 150,
                     child: Center(
-                        child: Lottie.asset("assets/images/feed_preloader.json",
-                            height: 150, width: 150)),
+                        child:Image.asset("assets/images/loader.gif",height: 130,width: 130,) /*Lottie.asset(
+                      "assets/images/feed_preloader.json",
+                      height: 150,
+                      width: 150,
+                      repeat: true,
+                      reverse: false,
+                      animate: true, // Ensure smooth animation
+                      options: LottieOptions(
+                        enableMergePaths: true,
+                      ),
+                    )*/),
                   ),
                 )
               : Positioned(
@@ -603,10 +641,9 @@ void refreshPref(){
       var response = await request.send();
       print(response.statusCode);
       if (response.statusCode == 200) {
-        profileObject!.notification=notification;
+        profileObject!.notification = notification;
         PreferenceUtils.setString(
             "profile_data", jsonEncode(profileObject!.toJson()));
-
       } else {
         isApiContentLoading = false;
         setState(() {});
@@ -658,7 +695,6 @@ void refreshPref(){
                     onTapDown: (dertails) {
                       Navigator.pop(context);
                       if (isDeleteAccount) {
-
                       } else {
                         logoutApi();
                         /*  _googleSignIn?.signOut();
@@ -675,7 +711,7 @@ void refreshPref(){
                       padding: EdgeInsets.only(
                           left: 15, right: 15, top: 15, bottom: 15),
                       child: Text(
-                       "Yes",
+                        "Yes",
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
