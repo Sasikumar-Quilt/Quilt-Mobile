@@ -246,9 +246,9 @@ requestNotificationPermission() async {
                             } else {
                               if (text.length > 0) {
                                 int age = int.parse(text);
-                                if (age < 18) {
+                                if (age < 13) {
                                   errorMessage =
-                                      "You must be at least 18 years old.";
+                                      "You must be at least 13 years old.";
                                 } else if (age > 120) {
                                   isEnable = false;
                                   errorMessage =

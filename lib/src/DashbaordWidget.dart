@@ -1047,7 +1047,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
-                      child: isJournalContent(
+                      child:/* isJournalContent(
                               contentList![index].contentType!.toLowerCase())
                           ? Container(
                               margin: EdgeInsets.only(left: 15),
@@ -1068,8 +1068,8 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                                     color: Color(0xFFFFFFFF),
                                     fontFamily: "Causten-Regular"),
                               ),
-                            )
-                          : Container()),
+                            )*/
+                           Container()),
                   Container(
                     margin: EdgeInsets.only(left: 15, right: 15, bottom: 0),
                     child: Column(
@@ -1146,11 +1146,11 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                             child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            isJournalContent(contentList![index]
+                           /* isJournalContent(contentList![index]
                                     .contentType!
                                     .toLowerCase())
                                 ? Container()
-                                : Container(
+                                :*/ Container(
                                     child: TextScrollWidget(
                                       text: contentList![index].contentType ==
                                               "ASSESSMENT"
@@ -1158,7 +1158,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                                               .assessmentList!
                                               .assessmentTitle!
                                           : contentList![index].contentType ==
-                                          "GAME"?contentList![index].contentName!:contentList![index].description!,
+                                          "GAME"?contentList![index].contentName!:contentList![index].contentName!,
                                       scrollSpeed: pageCount == index ? 50 : 0,
                                       shouldScroll: true,
                                     ),
@@ -1284,7 +1284,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                                     ),
                                     margin: EdgeInsets.only(left: 10),
                                   ),
-                                  isJournalContent(contentList![index]
+                                  /*isJournalContent(contentList![index]
                                           .contentType!
                                           .toLowerCase())
                                       ? Expanded(
@@ -1312,7 +1312,7 @@ class DashboardWidgetState extends BasePageState<DashboardWidget>
                                             setState(() {});
                                           },
                                         ))
-                                      : Container()
+                                      : Container()*/
                                 ],
                               ),
                               margin: EdgeInsets.only(top: 5),

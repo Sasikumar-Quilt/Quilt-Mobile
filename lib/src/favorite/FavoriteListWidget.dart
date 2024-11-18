@@ -192,7 +192,7 @@ class FavoriteState extends State<FavoriteListWidget> {
                             children: [
                               Container(
                                 child: Text(
-                                  contentList![index].contentFormat=="GAME"?contentList![index].contentName!:contentList![index].description!,
+                                  contentList![index].contentFormat=="GAME"?contentList![index].contentName!:contentList![index].contentName!,
                                   style: TextStyle(
                                       fontSize: 16.0,
                                       fontFamily: "Causten-Medium",

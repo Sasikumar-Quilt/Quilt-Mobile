@@ -283,7 +283,7 @@ bool isDestroy=false;
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.center,mainAxisSize: MainAxisSize.min,children: [
                         Container(
                           child: Text(
-                            contentObj!.description!,textAlign: TextAlign.center,
+                            contentObj!.contentName!,textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: Color(0xFFF8F7F8),
                                 fontSize: 14,

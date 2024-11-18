@@ -302,10 +302,10 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
                                 ageErrorMessage = "";
                                 if (text.length > 0) {
                                   int age = int.parse(text);
-                                  if (age < 18) {
+                                  if (age < 13) {
                                     isAgeEnable = false;
                                     ageErrorMessage =
-                                        "You must be at least 18 years old.";
+                                        "You must be at least 13 years old.";
                                   } else if (age > 120) {
                                     isAgeEnable = false;
                                     ageErrorMessage =
@@ -871,7 +871,7 @@ class CreateProfileWidgetState extends BasePageState<CreateProfileWidget> {
                                   ),
                                   Container(
                                     child: Text(
-                                      "The Quilt app is intended for users over the age of 18. By using this app, you represent you are at least 18 years of age. If you are not 18 years of age or otherwise do not agree to use the app according to the below information, you must not access the app.",
+                                      "The Quilt app is intended for users over the age of 13. By using this app, you represent you are at least 13 years of age. If you are not 13 years of age or otherwise do not agree to use the app according to the below information, you must not access the app.",
                                       textAlign: TextAlign.start,
                                       style: TextStyle(
                                           color: Color(0xFFDFDFDF),

@@ -366,7 +366,7 @@ if(mounted){
                                 children: [
                                   Container(
                                     child: Text(
-                                      contentObj!.description!,
+                                      contentObj!.contentName!,
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                           color: Color(0xFFF8F7F8),

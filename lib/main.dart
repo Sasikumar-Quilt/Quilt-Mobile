@@ -101,7 +101,7 @@ IEventBus eventBus = EventBus();
 void main() async{
   print(appFlavor);
   print("flavor");
-  AppEnvironment.setupEnv("Staging");
+  AppEnvironment.setupEnv("Demo");
   await FastCachedImageConfig.init(clearCacheAfter: const Duration(days: 15));
   WidgetsFlutterBinding.ensureInitialized();
   PushNotificationService.initialize();
