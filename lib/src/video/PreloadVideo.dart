@@ -172,10 +172,10 @@ class PreloadVideos {
         _controller
             .initialize()
             .then((value) => {updateWidget(),print("afterInitializeVideo")})
-            .catchError((error) => {
-             _controller.dispose(),
-             controllers.remove(index)
-        });
+            /*.catchError((error) => {
+            *//* _controller.dispose(),
+             controllers.remove(index)*//*
+        })*/;
       }
       print('🚀🚀🚀 PLAYING $index');
     } else {
